@@ -1,0 +1,106 @@
+import { Request, Response } from "express";
+import { hash, genSalt } from "bcryptjs";
+import { User } from "../models/User.model";
+import { hashToken, signAccessToken, signRefreshToken } from "../utils/tokens";
+
+const validateSignupData = (data: any): boolean => {
+    const { fullName, username, email, password, role, bio, profileImage } = data;
+    if (!email || !username || !password) {
+        return false;
+    }
+    return true;
+}
+
+const profileImageMapper = (gender: string): string => {
+    if (!gender) return '';
+    if (gender === "female") {
+        return `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 100)}.jpg`;
+    };
+    return `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`;
+}
+
+export const signup = async (req: Request, res: Response) => {
+    try {
+        const { fullName, username, email, password, profileImage, gender } = req.body;
+
+        const isValid = validateSignupData({ fullName, username, email, password, profileImage, gender });
+        if (!isValid) return res.status(400).json({ error: "Missing some fields" });
+
+        const salt = await genSalt(12);
+        const hashPassword = await hash(password, salt);
+
+        // const user =  {
+        //     id: Date.now().toString(),
+        //     fullName : fullName || '',
+        //     username,
+        //     email,
+        //     password : hashPassword,
+        //     bio : '',
+        //     role : 'AUTHOR',
+        //     gender : gender || '',
+        //     profileImage : gender && gender?.length > 0 ? `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random()*100)}.jpg` : '',
+        //     createdAt : new Date().toISOString(),
+        //     updatedAt : new Date().toISOString(),
+        // }
+
+        const user = new User({
+            fullName: fullName || '',
+            username: username || '',
+            email: email,
+            password: hashPassword,
+            profileImage: profileImageMapper(gender),
+            gender: gender || '',
+        });
+
+        const accessToken = signAccessToken({ id: user._id, email: user.email });
+        const refreshToken = signRefreshToken({ id: user._id });
+
+        // Hash refresh token and save to DB
+        const hashedRefresh = await hashToken(refreshToken);
+
+        user.refreshTokens.push({
+            tokenHash: hashedRefresh,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await user.save();
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // remove password from user object
+        user.password = '';
+
+        return res.status(201).json({
+            message: "User signed up successfully",
+            user,
+            accessToken,
+        });
+
+    } catch (error: any) {
+        console.log(`Error in Signup Controller : ` + error?.message);
+        return res.status(500).send(`Error in Signup Controller : ` + error?.message);
+    }
+};
+
+export const login = async (req: Request, res: Response) => {
+    try {
+        res.send("login Controller works");
+    } catch (error: any) {
+        console.log(`Error in login Controller : ` + error?.message);
+        return res.status(500).send(`Error in login Controller : ` + error?.message);
+    }
+};
+
+export const logout = async (req: Request, res: Response) => {
+    try {
+        res.send("logout Controller works");
+    } catch (error: any) {
+        console.log(`Error in logout Controller : ` + error?.message);
+        return res.status(500).send(`Error in logout Controller : ` + error?.message);
+    }
+};
