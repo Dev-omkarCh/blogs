@@ -10,7 +10,7 @@ import { store } from './app/store'
 import { Provider } from 'react-redux'
 import Login from './Page/Login.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
-import AppInitializer from './components/AppInitializer.tsx';
+import { setupInterceptors } from './lib/utils.ts';
 
 const routes = createBrowserRouter([
   {
@@ -32,27 +32,22 @@ const routes = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
-  }
-  ,
+  },
   {
-    element: <ProtectedRoute />,
-    children: [
-      {
-        path: "/dashboard",
-        element: <Dashboard />
-      },
-    ]
-  }
+    path: "/dashboard",
+    element: <Dashboard />
+  },
+  
 ])
+
+setupInterceptors();
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
   <>
 
     <Provider store={store}>
-      <AppInitializer>
-        <RouterProvider router={routes} />
-      </AppInitializer>
+      <RouterProvider router={routes} />
     </Provider>
     <Toaster
       position='bottom-right'

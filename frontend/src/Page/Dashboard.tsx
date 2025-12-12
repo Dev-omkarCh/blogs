@@ -1,10 +1,10 @@
 // components/Dashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { User, Lock, Mail, Settings, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
+import axiosInstance from '@/lib/utils';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
-import axiosInstance from '@/lib/utils';
-import { setAuthUser } from '@/features/auth/authSlice';
+// import { setAuthUser } from '@/features/auth/authSlice';
 
 // Mock list of sections for the right panel
 const dashboardSections = [
@@ -16,8 +16,7 @@ const dashboardSections = [
 const Dashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState('profile');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const authUser = useSelector((state: RootState) => state.authUser);
-  const accessToken = useSelector((state: RootState) => state.accessToken);
+  const authUser = useSelector((state: RootState) => state.authUser.user)
 
   // --- Sidebar Component ---
   const Sidebar: React.FC = () => (
@@ -39,14 +38,14 @@ const Dashboard: React.FC = () => {
       {/* Profile Summary */}
       <div className={`p-4 ${!isSidebarOpen && 'items-center'} flex flex-col border-b border-gray-700`}>
         <img 
-          src={authUser.profileImage} 
-          alt={`${authUser.username}'s profile`} 
+          src={authUser?.profileImage} 
+          alt={`${authUser?.username}'s profile`} 
           className="w-16 h-16 rounded-full object-cover border-2 border-sky-400 mb-2" 
         />
         {isSidebarOpen && (
             <>
-                <p className="text-lg font-medium text-white">{authUser.username}</p>
-                <p className="text-sm text-gray-400">{authUser.email}</p>
+                <p className="text-lg font-medium text-white">{authUser?.username}</p>
+                <p className="text-sm text-gray-400">{authUser?.email}</p>
             </>
         )}
       </div>
@@ -121,7 +120,6 @@ const Dashboard: React.FC = () => {
 
   const fetchUserProfile = async() => {
       const response = await axiosInstance.get("/api/users/profile");
-      setAuthUser(response.data);
   };
 
   // --- Main Render ---
