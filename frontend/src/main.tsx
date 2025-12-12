@@ -6,6 +6,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import SingleBlogPage from './Page/BlogPage.tsx';
 import SignUpForm from './Page/Signup.tsx';
 import Dashboard from './Page/Dashboard.tsx';
+import { store } from './app/store'
+import { Provider } from 'react-redux'
+import Login from './Page/Login.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import AppInitializer from './components/AppInitializer.tsx';
 
 const routes = createBrowserRouter([
   {
@@ -23,20 +28,34 @@ const routes = createBrowserRouter([
   {
     path: "/signup",
     element: <SignUpForm />
+  },
+  {
+    path: "/login",
+    element: <Login />
   }
   ,
   {
-    path: "/dashboard",
-    element: <Dashboard />
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Dashboard />
+      },
+    ]
   }
 ])
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
   <>
-    <RouterProvider router={routes} />
-    <Toaster 
-      position='bottom-right' 
+
+    <Provider store={store}>
+      <AppInitializer>
+        <RouterProvider router={routes} />
+      </AppInitializer>
+    </Provider>
+    <Toaster
+      position='bottom-right'
     />
   </>
   // </StrictMode>,

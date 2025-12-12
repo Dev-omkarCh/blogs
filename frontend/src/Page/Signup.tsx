@@ -1,10 +1,13 @@
 // components/SignUpForm.tsx
 import React, { useState, useMemo } from 'react';
 import { Mail, Key, User, Image, Zap, ChevronRight, ChevronLeft, Check, AlertCircle, Loader2 } from 'lucide-react';
-import type { FormData, InputFieldProps, Gender, AuthUser } from '../types/Signup'; // Assume types are imported
+import type { FormData, InputFieldProps, AuthUser } from '../types/Signup'; // Assume types are imported
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { setAuthUser } from '@/features/auth/authSlice';
+import { useDispatch } from 'react-redux';
+import { setAccessToken } from '@/features/token/AccessTokenSlice';
 
 // --- Helper Component: InputField (TypeScript) ---
 const InputField: React.FC<InputFieldProps> = ({ 
@@ -50,9 +53,8 @@ const SignUpForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const requiredFields: (keyof FormData)[] = ['email', 'password', 'username'];
 
@@ -93,13 +95,14 @@ const SignUpForm = () => {
 
     try {
         const response = await axios.post("/api/auth/signup/", formData);
-        const user = response.data.user;
-        setAuthUser(user);
+        const user : AuthUser = response.data.user;
 
         localStorage.setItem("authUser", JSON.stringify(user));
-        setAccessToken(response.data?.accessToken);
+        localStorage.setItem("accessToken",JSON.stringify(response.data?.accessToken));
+        dispatch(setAccessToken(response.data?.accessToken));
 
         toast.success("Signup successful");
+        dispatch(setAuthUser(user));
         navigate("/dashboard");
     } catch (error : any) {
         console.error("Error during signup: ", error?.message);

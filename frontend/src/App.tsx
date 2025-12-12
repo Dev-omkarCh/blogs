@@ -5,11 +5,18 @@ import BlogCard from "./components/BlogCard";
 import toast from 'react-hot-toast';
 import LoadingSpinner from "./components/LoadingSpinner";
 import SearchBar from "./components/SearchBar";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "./app/store";
+import { decrement, increment, incrementByAmount } from "./features/counter/counterSlice";
 
 const App = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const count = useSelector((state: RootState) => state.counter.value);
+  const autUser = useSelector((state: RootState) => state.authUser);
+  const accessToken = useSelector((state: RootState) => state.accessToken);
+  const dispatch = useDispatch();
 
   const fetchBlogs = async() => {
     try {
@@ -70,6 +77,33 @@ const App = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 w-screen">
         <LoadingSpinner size="w-12 h-12" />
+        <div>
+      <div>
+        {count}
+        <span className="text-white">{count}</span>
+        <button
+          aria-label="Increment value"
+          onClick={() => dispatch(increment())}
+          className="text-white"
+        >
+          Increment
+        </button>
+        <button
+          aria-label="Increment value"
+          onClick={() => dispatch(incrementByAmount(10))}
+          className="text-white"
+        >
+          Increment By 10
+        </button>
+        <button
+          aria-label="Decrement value"
+          onClick={() => dispatch(decrement())}
+          className="text-white"
+        >
+          Decrement
+        </button>
+      </div>
+    </div>
       </div>
     );
   }

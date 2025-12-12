@@ -7,7 +7,7 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "types": [],
+    "types": ["./backend/types/express.d.ts"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
