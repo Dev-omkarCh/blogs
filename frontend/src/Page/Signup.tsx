@@ -1,15 +1,10 @@
 // components/SignUpForm.tsx
 import React, { useState, useMemo } from 'react';
 import { Mail, Key, User, Image, Zap, ChevronRight, ChevronLeft, Check, AlertCircle, Loader2 } from 'lucide-react';
-import type { FormData, InputFieldProps, AuthUser } from '../types/Signup'; // Assume types are imported
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { setAuthUser } from '@/features/auth/authSlice';
-import { useDispatch } from 'react-redux';
-import { setAccessToken } from '@/features/token/AccessTokenSlice';
+import type { FormData, InputFieldProps} from '../types/Signup';
+import useSignup from '@/hooks/useSignup';
+import { Link } from 'react-router-dom';
 
-// --- Helper Component: InputField (TypeScript) ---
 const InputField: React.FC<InputFieldProps> = ({ 
   icon: Icon, 
   name, 
@@ -40,7 +35,7 @@ const InputField: React.FC<InputFieldProps> = ({
   </div>
 );
 
-// --- Main Component: SignUpForm (TypeScript) ---
+
 const SignUpForm = () => {
   const [tab, setTab] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<FormData>({
@@ -51,10 +46,9 @@ const SignUpForm = () => {
     profileImage: '',
     gender: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
   const [error, setError] = useState<string>('');
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { signup, loading } = useSignup();
 
   const requiredFields: (keyof FormData)[] = ['email', 'password', 'username'];
 
@@ -87,29 +81,7 @@ const SignUpForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validateRequired()) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-
-    try {
-        const response = await axios.post("/api/auth/signup/", formData);
-        const user : AuthUser = response.data.user;
-
-        localStorage.setItem("authUser", JSON.stringify(user));
-        localStorage.setItem("accessToken",JSON.stringify(response.data?.accessToken));
-        dispatch(setAccessToken(response.data?.accessToken));
-
-        toast.success("Signup successful");
-        dispatch(setAuthUser(user));
-        navigate("/dashboard");
-    } catch (error : any) {
-        console.error("Error during signup: ", error?.message);
-        toast.error(error?.message || "Signup failed");
-    } finally{
-        setIsSubmitting(false);
-    }
+    signup(formData);
     setError('');
   };
 
@@ -222,10 +194,10 @@ const SignUpForm = () => {
             {tab === 2 && (
               <button
                 type="submit"
-                disabled={isSubmitting || !isRequiredValid} // Disable if required fields are empty
+                disabled={loading || !isRequiredValid} // Disable if required fields are empty
                 className="flex items-center px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
               >
-                {isSubmitting ? (
+                {loading ? (
                     <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Signing Up...
                     </>
@@ -243,6 +215,10 @@ const SignUpForm = () => {
                 You can submit the form without filling the optional fields.
             </p>
           )}
+          <p className="text-center text-sm text-gray-400 mt-6">
+            Don't have an account?
+            <Link to="/login" className="text-sky-400 hover:text-sky-300 ml-1 font-medium">Login Here</Link>
+          </p>
         </form>
       </div>
     </div>

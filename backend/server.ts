@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Define the exact origin(s) allowed
 // TODO: Add your production domain(s) later
-const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
 const corsOptions: cors.CorsOptions = {
     // Dynamically set the ACAO header based on the request's origin
@@ -27,6 +27,7 @@ const corsOptions: cors.CorsOptions = {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
+             
         }
     },
     

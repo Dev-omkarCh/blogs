@@ -1,7 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from '../features/counter/counterSlice';
-import authUser from '../features/auth/authSlice';
-import accessToken from '../features/token/AccessTokenSlice';
+import authUser, { logout } from '../features/auth/authSlice';
 
 
 
@@ -9,7 +8,6 @@ export const store = configureStore({
   reducer: {
     counter: counterReducer,
     authUser: authUser,
-    accessToken : accessToken,
   },
 })
 

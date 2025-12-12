@@ -1,8 +1,9 @@
-import type { RootState } from "@/app/store";
-import axios from "axios";
+import { store, type RootState } from "@/app/store";
+import axios, { AxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { store } from '@/app/store';
+import { useDispatch } from "react-redux";
+import { setCredentials, logout } from "@/features/auth/authSlice";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -18,14 +19,19 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+export interface InternalAxiosRequestConfig {
+    // Add your custom properties here:
+    _retry?: boolean;  // Mark as optional (?) and define the type (boolean)
+    _sent?: boolean;   // If you are using another property to track if it was sent
+    // Add any other custom properties you use on the config object
+  }
 
 // 2. Request Interceptor: Attach the token to every request
 axiosInstance.interceptors.request.use(
     (config) => {
 
         const currentState: RootState = store.getState();
-        const token = currentState.accessToken;
-        const accessToken = token.accessToken;
+        const accessToken = currentState.authUser.token;
 
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;
@@ -37,45 +43,49 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-// axiosInstance.interceptors.response.use(
-//     (response) => response, // Standard successful response, pass it through
-//     async (error: AxiosError) => {
-//         const originalRequest = error.config;
-//         const dispatch = useDispatch();
+export const setupInterceptors = () => {
+axiosInstance.interceptors.response.use(
+    (response) => response, // Standard successful response, pass it through
+    async (error: AxiosError) => {
+        const originalRequest = error.config;
+        const dispatch = store.dispatch;
         
-//         // Check for specific token expiry errors (e.g., 403 Forbidden from backend middleware)
-//         // Ensure this check only runs once for the failed request
-//         if (error.response?.status === 403 && (error.response.data as any)?.message === 'Forbidden - Access Token Expired' && originalRequest && !originalRequest._retry) {
+        // Check for specific token expiry errors (e.g., 403 Forbidden from backend middleware)
+        // Ensure this check only runs once for the failed request
+        if (error.response?.status === 403 && 
+          // (error.response.data as any)?.message === 'Forbidden - Access Token Expired' &&
+           originalRequest && !originalRequest._retry) {
             
-//             originalRequest._retry = true; // Mark the request to prevent infinite loops
+            originalRequest._retry = true; // Mark the request to prevent infinite loops
 
-//             try {
-//                 // Call the dedicated refresh endpoint. The browser automatically sends the HTTP-Only cookie.
-//                 const refreshResponse = await axiosInstance.get('/auth/refresh'); 
+            try {
+                // Call the dedicated refresh endpoint. The browser automatically sends the HTTP-Only cookie.
+                const refreshResponse = await axiosInstance.get('/auth/refresh'); 
                 
-//                 const newAccessToken = refreshResponse.data.accessToken;
+                const newAccessToken = refreshResponse.data.accessToken;
 
-//                 // Update the global state with the new token
-//                 setAccessToken(newAccessToken);
+                // Update the global state with the new token
+                dispatch(setCredentials({ accessToken : newAccessToken }));
 
-//                 // Update the header of the original failed request with the new token
-//                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                // Update the header of the original failed request with the new token
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-//                 // Re-send the original request
-//                 return axiosInstance(originalRequest);
+                // Re-send the original request
+                return axiosInstance(originalRequest);
 
-//             } catch (refreshError: any) {
-//                 // Refresh token has failed (e.g., expired or revoked), force logout
-//                 console.error("Refresh token failed, logging out user:", refreshError);
-//                 useAuthStore.getState().logout(); // Clear tokens and redirect
-//                 return Promise.reject(refreshError);
-//             }
-//         }
+            } catch (refreshError: any) {
+                // Refresh token has failed (e.g., expired or revoked), force logout
+                console.error("Refresh token failed, logging out user:", refreshError);
+                logout(); // Clear tokens and redirect
+                return Promise.reject(refreshError);
+            }
+        }
         
-//         // For other errors (401, 404, etc.), just reject the promise
-//         return Promise.reject(error);
-//     }
-//   );
+        // For other errors (401, 404, etc.), just reject the promise
+        return Promise.reject(error);
+    }
+  );
+};
 
 export default axiosInstance;
 
