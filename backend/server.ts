@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import blogRoutes from './routes/blog.route';
 import authRoutes from './routes/auth.route';
 import connectDb from './db/connectDb';
+import userRoutes from './routes/user.route';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -12,8 +14,36 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Define the exact origin(s) allowed
+// TODO: Add your production domain(s) later
+const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+const corsOptions: cors.CorsOptions = {
+    // Dynamically set the ACAO header based on the request's origin
+
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, or same-origin requests)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    
+    // Must be set to true when credentials (cookies) are being sent
+    credentials: true,
+    
+    // methods and headers allowed in the preflight request
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Apply the CORS middleware
+app.use(cors(corsOptions));
+
 app.use('/api/blogs/', blogRoutes);
 app.use('/api/auth/', authRoutes);
+app.use('/api/users/', userRoutes);
 
 app.get("/", (req : Request ,res : Response)=>{
     return res.send("Hello World");

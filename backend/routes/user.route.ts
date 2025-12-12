@@ -1,8 +1,9 @@
 import express from 'express';
-import { getBlogs } from '../controllers/blog.controller';
 import protectedRoute from '../middleware/protectedRoute';
+import { getUserProfile } from '../controllers/user.controller';
+
 const router = express.Router();
 
-router.get('/',protectedRoute, getBlogs);
+router.get('/profile',protectedRoute, getUserProfile);
 
 export default router;

@@ -33,4 +33,15 @@ const userSchema = new mongoose.Schema({
         expiresAt: Number,
     }],
 }, { timestamps : true });
+
+// Apply a transformation function to the schema
+userSchema.methods.toJSON = function () {
+    const userObject = this.toObject();
+
+    // 🚨 Remove the sensitive fields from the object copy
+    delete userObject.password;
+    delete userObject.refreshTokens; // <--- This line removes the array
+
+    return userObject;
+};
 export const User = mongoose.model("Users", userSchema);

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { hash, genSalt } from "bcryptjs";
+import { hash, genSalt, compare } from "bcryptjs";
 import { User } from "../models/User.model";
 import { hashToken, signAccessToken, signRefreshToken } from "../utils/tokens";
 
@@ -28,20 +28,6 @@ export const signup = async (req: Request, res: Response) => {
 
         const salt = await genSalt(12);
         const hashPassword = await hash(password, salt);
-
-        // const user =  {
-        //     id: Date.now().toString(),
-        //     fullName : fullName || '',
-        //     username,
-        //     email,
-        //     password : hashPassword,
-        //     bio : '',
-        //     role : 'AUTHOR',
-        //     gender : gender || '',
-        //     profileImage : gender && gender?.length > 0 ? `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random()*100)}.jpg` : '',
-        //     createdAt : new Date().toISOString(),
-        //     updatedAt : new Date().toISOString(),
-        // }
 
         const user = new User({
             fullName: fullName || '',
@@ -72,8 +58,7 @@ export const signup = async (req: Request, res: Response) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
-        // remove password from user object
-        user.password = '';
+        // remove password from user object(Auto remove in model itself)
 
         return res.status(201).json({
             message: "User signed up successfully",
@@ -89,7 +74,40 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     try {
-        res.send("login Controller works");
+        const { email, password } = req.body;
+        if(!email || !password) return res.status(400).json({ error : "Please Provide Email or password"});
+
+        const user = await User.findOne({ email });
+        if(!user) return res.status(403).json({ error : "No User found" });
+
+        const isValidPassword = await compare(password, user.password);
+        if(!isValidPassword) return res.status(400).json({ error : "Incorrect username or password "});
+
+        const accessToken = signAccessToken({ id: user._id, email: user.email });
+        const refreshToken = signRefreshToken({ id: user._id });
+
+        // Hash refresh token and save to DB
+        const hashedRefresh = await hashToken(refreshToken);
+
+        user.refreshTokens.push({
+            tokenHash: hashedRefresh,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await user.save();
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        return res.status(201).json({
+            message: "User Login successfully",
+            user,
+            accessToken,
+        });
     } catch (error: any) {
         console.log(`Error in login Controller : ` + error?.message);
         return res.status(500).send(`Error in login Controller : ` + error?.message);
@@ -103,4 +121,12 @@ export const logout = async (req: Request, res: Response) => {
         console.log(`Error in logout Controller : ` + error?.message);
         return res.status(500).send(`Error in logout Controller : ` + error?.message);
     }
+};
+
+
+export const generateAccessToken = async (req: Request, res: Response) => {
+    const refreshToken = req.cookies;
+    console.log(refreshToken);
+    if(!refreshToken) return res.status(403).json({ error : "Forbidden Access"});
+    console.log(refreshToken);
 };
