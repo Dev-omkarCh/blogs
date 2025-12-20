@@ -1,14 +1,11 @@
 // types/SignUpTypes.ts
 
-export type Gender = 'male' | 'female' | 'other' | '';
-
 export interface FormData {
     fullName: string;
     email: string;
     password: string;
     username: string;
-    profileImage: string;
-    gender: Gender;
+    gender: string;
 }
 
 export interface InputFieldProps {

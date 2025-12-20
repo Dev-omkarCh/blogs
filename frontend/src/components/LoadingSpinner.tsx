@@ -1,9 +1,7 @@
-export default function LoadingSpinner({ size = "w-6 h-6" }) {
+export default function LoadingSpinner({ size = "w-8 h-8" }) {
   return (
-    <div className="flex items-center justify-center">
-      <div
-        className={`animate-spin rounded-full border-4 border-gray-300 border-t-transparent ${size}`}
-      />
+    <div className="flex justify-center items-center">
+      <div className={`animate-spin rounded-full ${size} border-b-2 border-white`}></div>
     </div>
   );
 }

@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import { hash, genSalt, compare } from "bcryptjs";
 import { User } from "../models/User.model";
 import { hashToken, signAccessToken, signRefreshToken } from "../utils/tokens";
+import { verify } from "jsonwebtoken";
+
+interface DecodedToken{
+    id: string,
+    iat: number,
+    exp: number
+};
 
 const validateSignupData = (data: any): boolean => {
     const { fullName, username, email, password, role, bio, profileImage } = data;
@@ -9,7 +16,7 @@ const validateSignupData = (data: any): boolean => {
         return false;
     }
     return true;
-}
+};
 
 const profileImageMapper = (gender: string): string => {
     if (!gender) return '';
@@ -17,7 +24,7 @@ const profileImageMapper = (gender: string): string => {
         return `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 100)}.jpg`;
     };
     return `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`;
-}
+};
 
 export const signup = async (req: Request, res: Response) => {
     try {
@@ -123,10 +130,20 @@ export const logout = async (req: Request, res: Response) => {
     }
 };
 
-
 export const generateAccessToken = async (req: Request, res: Response) => {
-    const refreshToken = req.cookies;
-    console.log(refreshToken);
-    if(!refreshToken) return res.status(403).json({ error : "Forbidden Access"});
-    console.log(refreshToken);
+
+    const refreshToken = req.cookies?.refreshToken;
+    if(!refreshToken) return res.status(403).json({ error : "Access is Forbidden"});
+
+    const secret = process.env.REFRESH_TOKEN_SECRET;
+    if(!secret) return res.status(500).json({ error: "Env is not getting Refresh token"})
+
+    const decoded = verify(refreshToken, secret);
+    const { id } = decoded as DecodedToken;
+    const user = await User.findById(id);
+    if(!user) return res.status(403).json({ error: "User not found"});
+
+    const accessToken = signAccessToken({ id: user._id, email: user.email });
+
+    res.status(200).json({ message : "Access token generated successfully", accessToken });
 };

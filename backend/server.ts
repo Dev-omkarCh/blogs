@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.route';
 import connectDb from './db/connectDb';
 import userRoutes from './routes/user.route';
 import cors from 'cors';
+import cookie from "cookie-parser";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ const corsOptions: cors.CorsOptions = {
 
 // Apply the CORS middleware
 app.use(cors(corsOptions));
+app.use(cookie());
 
 app.use('/api/blogs/', blogRoutes);
 app.use('/api/auth/', authRoutes);

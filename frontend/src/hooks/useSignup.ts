@@ -1,7 +1,7 @@
 import { setCredentials } from '@/features/auth/authSlice';
 import type { FormData } from '@/types/Signup';
 import axios from 'axios';
-import { useState } from 'react'
+import { use, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -9,24 +9,23 @@ import { useNavigate } from 'react-router-dom';
 
 const useSignup = () => {
 
-    const [ loading, setLoading ] = useState(false);
+    const [ isLoading, setIsLoading ] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     
-    const signup = async(data : FormData) => {
+    const signup = async(signupData : FormData) => {
 
-        setLoading(true);
-        const isValid = validation(data);
-        if(!isValid) return setLoading(false);
+        setIsLoading(true);
+        const isValid = validation(signupData);
+        if(!isValid) return setIsLoading(false);
 
         try{
             const res = await axios.post(`/api/auth/signup`,{
-                username : data.username,
-                email : data.email,
-                password : data.password,
-                profileImage : data.profileImage,
-                fullName : data.fullName,
-                gender : data.gender,
+                username : signupData.username,
+                email : signupData.email,
+                password : signupData.password,
+                fullName : signupData.fullName,
+                gender : signupData.gender,
             });
 
             const user = res.data?.user;
@@ -43,13 +42,29 @@ const useSignup = () => {
             toast.error(error?.message);
         }
         finally{
-            setLoading(false);
+            setIsLoading(false);
         }
     }
-  return { signup, loading }
+  return { signup, isLoading }
 }
 
-function validation({ email, password } : FormData){
+function validation({ fullName, gender, email, password, username } : FormData){
+    if(fullName.length < 3){
+        toast.error("Full Name must be atleast 3 characters");
+        return false;
+    }
+    if(gender === ""){
+        toast.error("Please select a gender");
+        return false;
+    }
+    if(gender !== "male" && gender !== "female" && gender !== "non-binary" && gender !== "private"){
+        toast.error("Please select a valid gender");
+        return false;
+    }
+    if(username.length < 3){
+        toast.error("Username must be atleast 3 characters");
+        return false;
+    }
     if(!email || !password){
         toast.error("Please fill in all Fields");
         return false;

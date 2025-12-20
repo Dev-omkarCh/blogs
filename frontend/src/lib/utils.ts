@@ -2,7 +2,6 @@ import { store, type RootState } from "@/app/store";
 import axios, { AxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { useDispatch } from "react-redux";
 import { setCredentials, logout } from "@/features/auth/authSlice";
 
 export function cn(...inputs: ClassValue[]) {
@@ -29,7 +28,8 @@ export interface InternalAxiosRequestConfig {
 // 2. Request Interceptor: Attach the token to every request
 axiosInstance.interceptors.request.use(
     (config) => {
-
+      
+        console.log("Response Interceptor");
         const currentState: RootState = store.getState();
         const accessToken = currentState.authUser.token;
 
@@ -43,10 +43,12 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-export const setupInterceptors = () => {
-axiosInstance.interceptors.response.use(
+export const setupInterceptors = async () => {
+
+  axiosInstance.interceptors.response.use(
     (response) => response, // Standard successful response, pass it through
     async (error: AxiosError) => {
+      console.log("Response Interceptor");
         const originalRequest = error.config;
         const dispatch = store.dispatch;
         
@@ -60,9 +62,13 @@ axiosInstance.interceptors.response.use(
 
             try {
                 // Call the dedicated refresh endpoint. The browser automatically sends the HTTP-Only cookie.
-                const refreshResponse = await axiosInstance.get('/auth/refresh'); 
+                const response = await axiosInstance.get('/api/auth/refresh'); 
                 
-                const newAccessToken = refreshResponse.data.accessToken;
+                const newAccessToken = response.data?.accessToken;
+
+                if(!newAccessToken) {
+                    throw new Error("No access token in refresh response");
+                };
 
                 // Update the global state with the new token
                 dispatch(setCredentials({ accessToken : newAccessToken }));
@@ -85,6 +91,14 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
     }
   );
+
+  const user = store.getState().authUser.user;
+  const accessToken = store.getState().authUser.token;
+  console.log("Setting up interceptors, user:", user);
+  if(user && !accessToken){
+    const response = await axiosInstance.get('/api/auth/refresh');
+    console.log(response.data);
+  }
 };
 
 export default axiosInstance;

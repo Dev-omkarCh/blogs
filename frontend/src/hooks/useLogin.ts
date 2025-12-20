@@ -7,15 +7,15 @@ import { useNavigate } from 'react-router-dom';
 
 const useLogin = () => {
 
-    const [ loading, setLoading ] = useState(false);
+    const [ isLoading, setIsLoading ] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     
     const login = async(email : string , password : string) => {
 
-        setLoading(true);
+        setIsLoading(true);
         const success = validation(email, password);
-        if(!success) return setLoading(false);
+        if(!success) return setIsLoading(false);
 
         try{
             const res = await axios.post(`/api/auth/login`,{
@@ -36,10 +36,10 @@ const useLogin = () => {
             toast.error(error?.message);
         }
         finally{
-            setLoading(false);
+            setIsLoading(false);
         }
     }
-  return { login, loading }
+  return { login, isLoading }
 }
 
 function validation(email : string , password : string){
