@@ -1,9 +1,14 @@
 // components/Dashboard.tsx
 import React, { useEffect, useState } from 'react';
-import { User, Lock, Mail, Settings, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, Lock, Mail, Settings, LogOut, ChevronRight, ChevronLeft, ArrowBigLeft, ArrowDown, ArrowLeft } from 'lucide-react';
 import axiosInstance from '@/lib/utils';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
+import axios from 'axios';
+import type { FormData } from '@/types/Signup';
+import { Link } from 'react-router-dom';
+import useRefreshToken from '@/hooks/useRefreshToken';
+import { setCredentials } from '@/features/auth/authSlice';
 // import { setAuthUser } from '@/features/auth/authSlice';
 
 // Mock list of sections for the right panel
@@ -16,7 +21,9 @@ const dashboardSections = [
 const Dashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState('profile');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const authUser = useSelector((state: RootState) => state.authUser.user)
+  const authUser = useSelector((state: RootState) => state.authUser.user);
+  const [user, setUser] = useState<FormData | null>(null);
+  const refresh = useRefreshToken();
 
   // --- Sidebar Component ---
   const Sidebar: React.FC = () => (
@@ -25,6 +32,7 @@ const Dashboard: React.FC = () => {
       
       {/* Sidebar Header/Toggle */}
       <div className="flex justify-between items-center p-4 border-b border-gray-700">
+        <Link to={"/login"}><ArrowLeft className='text-white mr-8' /></Link>
         {isSidebarOpen && <h2 className="text-xl font-semibold text-white">Account Center</h2>}
         <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
@@ -37,6 +45,10 @@ const Dashboard: React.FC = () => {
 
       {/* Profile Summary */}
       <div className={`p-4 ${!isSidebarOpen && 'items-center'} flex flex-col border-b border-gray-700`}>
+        <button onClick={async()=> {
+          const token = await refresh();
+          console.log(token)
+        }}>Refresh</button>
         <img 
           src={authUser?.profileImage} 
           alt={`${authUser?.username}'s profile`} 
@@ -114,13 +126,33 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  useEffect(()=>{
-    fetchUserProfile();
-  },[]);
+  const dispatch = useDispatch();
 
-  const fetchUserProfile = async() => {
-      const response = await axiosInstance.get("/api/users/profile");
-  };
+  useEffect(()=>{
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const fetchUserProfile = async() => {
+    try {
+      const response = await axiosInstance.get("/api/users/profile", {
+        signal: controller.signal,
+      });
+
+      console.log(response.data);
+      isMounted && setUser(response.data);
+      dispatch(setCredentials({ user : response.data }));
+    } catch (error : any) {
+      console.error(error);
+    }
+    
+    return () => {
+      isMounted =  false;
+      controller.abort();
+    }
+    };
+
+  fetchUserProfile();
+  },[]);
 
   // --- Main Render ---
   return (
@@ -130,6 +162,10 @@ const Dashboard: React.FC = () => {
       <ContentPanel />
     </div>
   );
+};
+
+export const dashboardLoader = () => {
+  
 };
 
 export default Dashboard;
