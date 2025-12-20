@@ -1,12 +1,20 @@
+// backend/server.ts
+
+// Importing necessary modules
 import express from 'express';
 import {Request, Response} from 'express';
 import dotenv from 'dotenv';
-import blogRoutes from './routes/blog.route';
-import authRoutes from './routes/auth.route';
-import connectDb from './db/connectDb';
-import userRoutes from './routes/user.route';
 import cors from 'cors';
 import cookie from "cookie-parser";
+
+// Routes imports
+import blogRoutes from './routes/blog.route';
+import authRoutes from './routes/auth.route';
+import userRoutes from './routes/user.route';
+import queryRoutes from './routes/query.route';
+
+// Database connection import
+import connectDb from './db/connectDb';
 
 dotenv.config();
 
@@ -47,6 +55,7 @@ app.use(cookie());
 app.use('/api/blogs/', blogRoutes);
 app.use('/api/auth/', authRoutes);
 app.use('/api/users/', userRoutes);
+app.use('/api/queries/', queryRoutes);
 
 app.get("/", (req : Request ,res : Response)=>{
     return res.send("Hello World");

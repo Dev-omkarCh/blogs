@@ -4,10 +4,8 @@ import { User, Lock, Mail, Settings, LogOut, ChevronRight, ChevronLeft, ArrowBig
 import axiosInstance from '@/lib/utils';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
-import axios from 'axios';
 import type { FormData } from '@/types/Signup';
 import { Link } from 'react-router-dom';
-import useRefreshToken from '@/hooks/useRefreshToken';
 import { setCredentials } from '@/features/auth/authSlice';
 // import { setAuthUser } from '@/features/auth/authSlice';
 
@@ -23,7 +21,6 @@ const Dashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const authUser = useSelector((state: RootState) => state.authUser.user);
   const [user, setUser] = useState<FormData | null>(null);
-  const refresh = useRefreshToken();
 
   // --- Sidebar Component ---
   const Sidebar: React.FC = () => (
@@ -46,8 +43,6 @@ const Dashboard: React.FC = () => {
       {/* Profile Summary */}
       <div className={`p-4 ${!isSidebarOpen && 'items-center'} flex flex-col border-b border-gray-700`}>
         <button onClick={async()=> {
-          const token = await refresh();
-          console.log(token)
         }}>Refresh</button>
         <img 
           src={authUser?.profileImage} 
