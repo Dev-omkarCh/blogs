@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import BlogExplorer from './pages/Blogs';
 import Template from './pages/Template';
 import CreateBlog from './pages/CreateBlog';
+import BlogView from './pages/BlogPage';
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
       {
         path: "/blog/template",
         element: <Template />
+      },
+      {
+        path: "/blog/:id",
+        element: <BlogView />
       },
     ],
   },

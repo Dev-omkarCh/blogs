@@ -172,3 +172,13 @@
   scrollbar-width: thin;
   scrollbar-color: #1e293b #020617;
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

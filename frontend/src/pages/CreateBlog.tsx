@@ -12,7 +12,8 @@ import {
   Minus,
   Flag,
   ExternalLink,
-  Image
+  Image,
+  Youtube
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,6 +26,7 @@ import useCreateBlog from '@/hooks/useCreateBlog';
 import TagsInput from '@/components/createBlog/Tag';
 import CategoryDropdown from '@/components/createBlog/CategoryDropdown';
 import CodeBlock from '@/components/createBlog/CodeBlock';
+import YouTubeBlock from '@/components/createBlog/YoutubeBlock';
 
 const VisualBlogEditor = () => {
   const [blocks, setBlocks] = useState<any[]>([
@@ -87,6 +89,13 @@ const VisualBlogEditor = () => {
       icon: Flag,
       fields: ['title', 'subtitle'],
       color: "text-indigo-400"
+    },
+    { 
+      id: 'youtube', 
+      name: "YouTube Video", 
+      icon: Youtube, 
+      fields: ['url', 'description', 'timestamps'], 
+      color: "text-red-500" 
     }
   ];
 
@@ -290,6 +299,10 @@ const VisualBlogEditor = () => {
                     <div className="px-6 py-2 rounded-full border border-slate-800 text-slate-400 text-xs font-bold">Follow Author</div>
                   </div>
                 </div>
+              )}
+
+              {block.type === 'youtube' && (
+                <YouTubeBlock data={block.data} />
               )}
 
               {/* ACTION: DELETE */}

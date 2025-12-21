@@ -1,239 +1,324 @@
-import { useState} from 'react';
-import { 
-  Plus, Code, Quote, AlertCircle, 
-  ChevronLeft, Trash2, Heading1, List, 
-  Columns, MousePointer2 
-} from 'lucide-react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import CodeBlock from '@/components/createBlog/CodeBlock';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Clock,
+  Calendar,
+  Send,
+  MessageSquare,
+  Heart
+} from 'lucide-react';
+import ShareModal from '@/components/viewBlog/ShareModal';
+import toast from 'react-hot-toast';
 
-const VisualBlogEditor = () => {
-  const [blocks, setBlocks] = useState<any[]>([
-    { id: '1', type: 'text', html: 'Start typing your story here...', color: 'text-slate-300', content: '' }
-  ]);
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTemplate, setActiveTemplate] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({});
+interface Blog {
+  _id: string;
+  title: string;
+  content: any[];
+  stats: any;
+  comments: any[];
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+  category: string;
+  published: boolean;
+  tags: string[];
+  _v: number;
+}
 
-  const templates = [
-    { id: 'h2', name: "Section Heading", icon: Heading1, fields: ['text'], color: "text-white" },
-    { id: 'alert', name: "Feature Note", icon: AlertCircle, fields: ['title', 'message'], color: "text-amber-400" },
-    { id: 'list', name: "Step List", icon: List, fields: ['item1', 'item2', 'item3'], color: "text-green-400" },
-    { id: 'bento', name: "Bento Grid (2 Images)", icon: Columns, fields: ['url1', 'url2'], color: "text-indigo-400" },
-    { id: 'code', name: "Code Block", icon: Code, fields: ['lang', 'code'], color: "text-blue-400" },
-    { id: 'quote', name: "Design Quote", icon: Quote, fields: ['text', 'author'], color: "text-purple-400" }
-  ];
+const BlogView = () => {
+  const { id } = useParams();
+  const [blog, setBlog] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
+  const [likes, setLikes] = useState<string[]>([]); // Array of User IDs
+  const [comments, setComments] = useState<any[]>([]);
+  const [isLiked, setIsLiked] = useState(false);
+  const currentUserId = "693c4e935bc2a5acef46c5ba"; // Get this from your Auth context
+  const [commentText, setCommentText] = useState("");
 
-  // const updateBlockColor = (id: string, colorClass: string) => {
-  //   setBlocks(blocks.map(b => b.id === id ? { ...b, color: colorClass } : b));
-  // };
+  // Dynamic Scroll Progress Logic
+  // useEffect(() => {
+  //   const updateScroll = () => {
+  //     const currentScroll = window.scrollY;
+  //     const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+  //     if (scrollHeight) setScrollProgress((currentScroll / scrollHeight) * 100);
+  //   };
+  //   window.addEventListener("scroll", updateScroll);
+  //   return () => window.removeEventListener("scroll", updateScroll);
+  // }, []);
 
-  const addTextBlock = (content : string) => {
-    setBlocks(prev => [...prev, { id: Math.random().toString(), type: 'text', content }])
-  };
-
-  const addBlock = () => {
-    const newBlock = {
-      id: Math.random().toString(36).substr(2, 9),
-      type: activeTemplate.id,
-      data: { ...formData }
+  useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        const response = await axios.get(`http://localhost:4000/api/blogs/${id}`);
+        console.log(response.data.blog);
+        setBlog(response.data.blog);
+      } catch (error) { console.error(error); } finally { setLoading(false); }
     };
-    setBlocks([...blocks, newBlock, { id: Math.random().toString(), type: 'text', content: '' }]);
-    setIsDialogOpen(false);
-    setFormData({});
-  };
+    fetchBlog();
+  }, [id]);
 
-  const deleteBlock = (id: string) => {
-    if (blocks.length > 1) {
-        setBlocks(blocks.filter(b => b.id !== id));
+  useEffect(() => {
+    if (blog && blog.stats) {
+      setLikes(blog.stats?.likes || []);
+      // Check if current user has already liked the post
+      if(blog.stats?.likes?.length > 0){
+        setIsLiked(blog.stats?.likes?.includes(currentUserId));
+      }
     }
-  };
+    if(blog && blog.comments){
+      setComments(blog.comments);
+    }
+  }, [blog]);
 
-  const handlePublishBlog = () => {
-    blocks.map((block)=>{
-        console.log(block?.content || block);
+  const formatDate = (date: string | Date | undefined) => {
+    if (!date) return "No date provided";
+
+    const d = new Date(date);
+    
+    // Check if the date is valid
+    if (isNaN(d.getTime())) return "Invalid date";
+
+    return d.toLocaleDateString("en-US", { 
+        month: "long", 
+        day: "numeric", 
+        year: "numeric" 
     });
-  };
+};
 
-  // Function to apply styles to selected text
-  // const applyStyle = (command: string, value?: string) => {
-  //   document.execCommand(command, false, value);
-  // };
+  // 2. Updated Like Handler
+  const handleLike = async () => {
+    try {
 
-  const isAutoFocus = (block : any) => {
-    const size = blocks.length;
-    const newblock = blocks[size - 1];
-    if(newblock?.id === block?.id){
-        return true;
+      const response = await axios.post(`http://localhost:4000/api/blogs/${blog._id}/like`, {
+        userId: currentUserId
+      });
+
+      setBlog(response.data.blog);
+    } catch (err: any) {
+      console.error("Like failed", err);
+      toast.error(err?.message);
+      // Rollback to original state on error
+      setLikes(blog.stats.likes);
+      setIsLiked(blog.stats.likes.includes(currentUserId));
     }
-    return false;
   };
+
+  // 3. Updated Comment Handler
+  const handleComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    try {
+      const response = await axios.post(`http://localhost:4000/api/blogs/${blog._id}/comment`, {
+        userId: currentUserId,
+        comment: commentText
+      });
+
+      console.log(response.data);
+
+      // The backend should return the newly created comment object
+      setBlog((prev: Blog) => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          comments: [...(prev.stats?.comments || []), response.data.newComment as Comment]
+        }
+      }));
+      setCommentText("");
+    } catch (err) {
+      console.error("Comment failed", err);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (!blog) return <div className="min-h-screen bg-slate-950 text-white p-20">Blog not found.</div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
-      <nav className="h-16 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between px-6 sticky top-0 z-50 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
-          <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Auto-saving</span>
-          </div>
-        </div>
-        <button 
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-full text-sm font-bold 
-            shadow-lg shadow-indigo-500/20 transition-all"
-            onClick={handlePublishBlog}
-        >
-          Publish Article
-        </button>
-      </nav>
+    <div className="min-h-screen pb-10 bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
 
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-12">
-        <main className="lg:col-span-8 p-10 lg:p-20 space-y-4">
-          <input 
-            placeholder="The Title of Your Masterpiece" 
-            className="w-full bg-transparent text-6xl font-black outline-none placeholder:text-slate-900 mb-12 tracking-tighter"
-          />
+      {/* DYNAMIC PROGRESS BAR */}
+      {/* <div className="fixed top-0 left-0 w-full h-1 bg-slate-900/50 z-60 backdrop-blur-sm">
+        <div className="h-full bg-indigo-500 transition-all duration-150 shadow-[0_0_15px_#6366f1]" style={{ width: `${scrollProgress}%` }} />
+      </div> */}
 
-          {blocks.map((block) => (
-            <div key={block.id} className="relative group min-h-5">
-              {/* --- TEXT BLOCK --- */}
-              {block.type === 'text' && (
-                <input
-                  value={block.content || ''}
-                  onChange={(e) => setBlocks(blocks.map(b => b.id === block.id ? {...b, content: e.target.value} : b))}
-                  onKeyUp={(e) => {
-                    if(e.key === "Enter") addTextBlock(block.content)
-                  }}
-                  autoFocus={isAutoFocus(block)}
-                  placeholder="Type '/' for commands or use the sidebar..."
-                  className="w-full bg-transparent text-xl leading-relaxed outline-none resize-none placeholder:text-slate-900/50"
-                />
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 pt-24">
+
+          {/* --- LEFT / CENTER: MAIN CONTENT (Col 1-8) --- */}
+          <main className="lg:col-span-8 pb-40">
+            <header className="mb-12">
+              <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.95] mb-8">
+                {blog.title}
+              </h1>
+              {blog.image && (
+                <img src={blog.image} className="w-full h-[450px] object-cover rounded-[2.5rem] border border-slate-900 shadow-2xl" alt="Cover" />
               )}
+            </header>
 
-              {/* --- HEADING BLOCK --- */}
-              {block.type === 'h2' && (
-                <h2 className="text-3xl font-bold text-white mt-12 mb-4 tracking-tight border-b border-slate-900 pb-2">
-                  {block.data.text}
-                </h2>
-              )}
+            <article className="space-y-10">
+              {blog.content.map((block: any) => (
+                <div key={block.id}>
+                  {block.type === 'text' && (
+                    <div className={`text-xl leading-relaxed opacity-90 ${block.color}`} dangerouslySetInnerHTML={{ __html: block.html }} />
+                  )}
+                  {block.type === 'h2' && <h2 className="text-4xl font-black text-white mt-16 mb-4">{block.data.text}</h2>}
+                  {block.type === 'code' && <CodeBlock data={block.data} onDelete={() => { }} />}
+                  {/* ... other block types (youtube, divider, etc.) same as before */}
+                </div>
+              ))}
+            </article>
+            <section className="mt-20 pt-20 border-t border-slate-900">
+              <div className="flex items-center justify-between mb-10">
+                <h3 className="text-3xl font-black text-white tracking-tighter flex items-center gap-4">
+                  Discussion <span className="text-sm font-mono text-slate-600 bg-slate-900 px-3 py-1 rounded-full">{comments.length}</span>
+                </h3>
 
-              {/* --- STEP LIST BLOCK --- */}
-              {block.type === 'list' && (
-                <div className="my-8 space-y-3">
-                  {[block.data.item1, block.data.item2, block.data.item3].map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-4 p-4 bg-slate-900/30 border border-slate-800 rounded-2xl">
-                      <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                        {idx + 1}
+                {/* LIKE BUTTON TOGGLE */}
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full border transition-all ${isLiked
+                    ? "bg-rose-500/10 border-rose-500 text-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.2)]"
+                    : "border-slate-800 text-slate-400 hover:border-slate-600"
+                    }`}
+                >
+                  <Heart size={18} fill={isLiked ? "currentColor" : "none"} />
+                  <span className="text-sm font-bold">{likes.length}</span>
+                </button>
+              </div>
+
+              {/* COMMENT INPUT */}
+              <form onSubmit={handleComment} className="mb-16 group">
+                <div className="relative">
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Add to the discussion..."
+                    className="w-full bg-slate-900/30 border border-slate-800 rounded-[2rem] p-6 text-white outline-none focus:border-indigo-500 focus:bg-slate-900/50 transition-all min-h-[120px] resize-none"
+                  />
+                  <div className="absolute bottom-4 right-4 flex items-center gap-4">
+                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest opacity-0 group-focus-within:opacity-100 transition-opacity">Press Cmd + Enter</span>
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20"
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* COMMENTS FEED */}
+              <div className="space-y-8">
+                {comments.length > 0 ? comments.map((comment) => (
+                  <div key={Math.random() * 10} className="flex gap-5 group animate-in fade-in slide-in-from-left-4 duration-500">
+                    {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
+                      {c.author[0]}
+                    </div> */}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {/* <span className="text-sm font-bold text-white">{c.author}</span> */}
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                          {formatDate(comment.createdAt)}
+                        </span>
                       </div>
-                      <span className="text-slate-300 font-medium">{item}</span>
+                      <p className="text-slate-400 leading-relaxed text-sm">
+                        {comment?.comment}
+                      </p>
+                      <div className="flex items-center gap-4 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-widest flex items-center gap-1.5"><Heart size={12} /> Like</button>
+                        <button className="text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-widest flex items-center gap-1.5"><MessageSquare size={12} /> Reply</button>
+                      </div>
                     </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-10 border-2 border-dashed border-slate-900 rounded-[3rem]">
+                    <MessageSquare size={32} className="mx-auto text-slate-800 mb-4" />
+                    <p className="text-slate-600 text-sm font-bold uppercase tracking-widest">No comments yet. Start the conversation!</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </main>
+
+          {/* --- RIGHT: STICKY DETAILS SIDEBAR (Col 9-12) --- */}
+          <aside className="lg:col-span-4 lg:block">
+            <div className="sticky top-24 space-y-8">
+
+              {/* AUTHOR CARD */}
+              <div className="p-6 rounded-3xl bg-slate-900/30 border border-slate-800">
+                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Written By</p>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white uppercase">{blog.author[0]}</div>
+                  <div>
+                    <p className="text-sm font-bold text-white">{blog.author}</p>
+                    <p className="text-xs text-slate-500">Full Stack Developer</p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-slate-500">
+                  {/* <span className="text-xs flex items-center gap-1.5"><Calendar size={14} /> {new Date(blog.createdAt).toLocaleDateString()}</span>
+                  <span className="text-xs flex items-center gap-1.5"><Clock size={14} /> {blog.stats?.readTime}</span> */}
+                </div>
+              </div>
+
+              {/* STATS & ENGAGEMENT */}
+              <div className="flex items-center justify-between px-6 py-4 rounded-3xl border border-slate-800 bg-slate-900/10">
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-600 font-bold uppercase mb-1">Views</p>
+                  <p className="text-sm font-black text-white">{blog.stats?.views || 0}</p>
+                </div>
+                <div className="w-px h-8 bg-slate-800" />
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-600 font-bold uppercase mb-1">Likes</p>
+                  {/* Use the length of the likes array */}
+                  <p className="text-sm font-black text-white">{likes.length}</p>
+                </div>
+                <div className="w-px h-8 bg-slate-800" />
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-600 font-bold uppercase mb-1">Comments</p>
+                  {/* Use the length of the comments array */}
+                  <p className="text-sm font-black text-white">{comments.length}</p>
+                </div>
+              </div>
+
+              {/* CATEGORY & TAGS */}
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Filed Under</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">{blog.category}</span>
+                  {blog.tags?.map((tag: string) => (
+                    <span key={tag} className="px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:border-indigo-500 hover:text-indigo-400 transition-all cursor-pointer">
+                      #{tag}
+                    </span>
                   ))}
                 </div>
-              )}
-
-              {/* --- BENTO GRID BLOCK --- */}
-              {block.type === 'bento' && (
-                <div className="grid grid-cols-2 gap-4 my-8 h-64">
-                   <div className="rounded-3xl bg-slate-900 overflow-hidden border border-slate-800">
-                     <img src={block.data.url1} className="w-full h-full object-cover opacity-80" alt="Bento 1" />
-                   </div>
-                   <div className="rounded-3xl bg-slate-900 overflow-hidden border border-slate-800">
-                     <img src={block.data.url2} className="w-full h-full object-cover opacity-80" alt="Bento 2" />
-                   </div>
-                </div>
-              )}
-
-              {/* --- PREVIOUS BLOCKS (Alert, Code, Quote) --- */}
-              {block.type === 'alert' && (
-                <div className="p-6 my-6 bg-amber-500/5 border-l-4 border-amber-500 rounded-r-2xl">
-                  <h4 className="text-amber-500 font-bold mb-1 uppercase text-xs tracking-widest">{block.data.title}</h4>
-                  <p className="text-slate-300">{block.data.message}</p>
-                </div>
-              )}
-
-              {block.type === 'code' && (
-                <div className="my-8 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 font-mono">
-                  <div className="bg-slate-900 px-4 py-2 text-[10px] text-slate-500 uppercase tracking-widest">{block.data.lang}</div>
-                  <pre className="p-6 text-indigo-300 text-sm overflow-x-auto"><code>{block.data.code}</code></pre>
-                </div>
-              )}
-
-              {block.type === 'quote' && (
-                <div className="my-16 px-12 border-l-2 border-indigo-500/30">
-                   <p className="text-4xl font-serif italic text-white/90 leading-tight">"{block.data.text}"</p>
-                   <p className="text-indigo-500 font-bold mt-4 uppercase tracking-widest text-xs">— {block.data.author}</p>
-                </div>
-              )}
-
-              {/* ACTION: DELETE */}
-                <button 
-                  onClick={() => deleteBlock(block.id)}
-                  className={`absolute -left-12 top-1/2 -translate-y-1/2 p-2 text-slate-700 opacity-0 
-                  group-hover:opacity-100 transition-all bg-slate-900 rounded-lg border border-slate-800 shadow-xl 
-                  hover:text-red-500`}
-                >
-                  <Trash2 size={16} />
-                </button>
-            </div>
-          ))}
-        </main>
-
-        <aside className="lg:col-span-4 border-l border-slate-900 p-8 h-[calc(100vh-4rem)] sticky top-16 bg-slate-950/50">
-          <div className="mb-10">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500 mb-6 flex items-center gap-2">
-              <Plus size={14}/> Add Content Block
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              {templates.map(temp => (
-                <button 
-                  key={temp.id}
-                  onClick={() => { setActiveTemplate(temp); setIsDialogOpen(true); }}
-                  className="w-full flex items-center justify-between p-4 bg-slate-900/40 border border-slate-800 rounded-2xl hover:border-indigo-500/50 hover:bg-slate-900 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl bg-slate-950 ${temp.color}`}><temp.icon size={18} /></div>
-                    <span className="text-sm font-bold text-slate-400 group-hover:text-white transition-colors">{temp.name}</span>
-                  </div>
-                  <MousePointer2 size={14} className="text-slate-700 group-hover:text-indigo-500" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-lg rounded-4xl">
-          <DialogHeader><DialogTitle className="text-2xl font-bold">Configure Block</DialogTitle></DialogHeader>
-          <div className="grid gap-6 py-4">
-            {activeTemplate?.fields.map((field: string) => (
-              <div key={field} className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">{field}</label>
-                <textarea 
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-slate-700"
-                  placeholder={`Enter ${field}...`}
-                  rows={field === 'code' || field === 'text' ? 5 : 2}
-                  onChange={(e) => setFormData({...formData, [field]: e.target.value})}
-                />
               </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <button onClick={addBlock} className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20">
-              Insert Block
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+              {/* ACTIONS */}
+              <button
+                onClick={() => setIsShareOpen(true)}
+                className="w-full py-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-indigo-400 transition-colors shadow-xl shadow-white/5"
+              >
+                <Send size={16} /> Share Post
+              </button>
+
+              {/* Add the Modal component at the end of your JSX */}
+              <ShareModal
+                isOpen={isShareOpen}
+                onClose={() => setIsShareOpen(false)}
+                blogData={blog}
+              />
+
+            </div>
+          </aside>
+
+        </div>
+      </div>
     </div>
   );
 };
 
-export default VisualBlogEditor;
+export default BlogView;
