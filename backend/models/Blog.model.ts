@@ -23,13 +23,20 @@ const blogSchema = new mongoose.Schema({
     author : { type: String, required: true },
     tags : [String],
     category : { type: String, required: true },
-    stats : {
-        views : { type: Number, default: 0 },
-        anonymous : { type: Number, default: 0 },
-        likes : { type: Number, default: 0 },
-        comments : { type: Number, default: 0 }, 
-        readTime : { type: String, default: "5 min" },
+    stats : { 
+        type: Object, 
+        default: {
+            views : 0,
+            anonymous : 0,
+            likes : [mongoose.Types.ObjectId],
+            readTime : "5 min",
+        }
     },
+    comments : {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Comment',
+        default: []
+    }, 
     status : { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
     image : { type: String },
     published : { type: Boolean, default: false },
