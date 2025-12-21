@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, Check, Terminal, Palette, ChevronDown, Trash2 } from 'lucide-react';
 
-const CodeBlock = ({ data, onDelete }: { data: any, onDelete: () => void }) => {
+const CodeBlock = ({ data }: { data: any, onDelete: () => void }) => {
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState('github');
 
@@ -34,49 +34,78 @@ const CodeBlock = ({ data, onDelete }: { data: any, onDelete: () => void }) => {
       header: 'bg-[#3b4252]',
       border: 'border-[#4c566a]',
       syntax: { kw: 'text-[#81a1c1]', str: 'text-[#a3be8c]', num: 'text-[#b48ead]', fn: 'text-[#88c0d0]', tag: 'text-[#ebcb8b]' }
+    },
+    vscode: { 
+    name: 'VS Code Dark+', 
+    bg: 'bg-[#1e1e1e]', 
+    header: 'bg-[#252526]',
+    border: 'border-[#333333]',
+    syntax: { 
+      kw: 'text-[#569cd6]',      // Classic VS Code Blue
+      str: 'text-[#ce9178]',     // Terracotta/Ginger
+      num: 'text-[#b5cea8]',     // Light Green
+      fn: 'text-[#dcdcaa]',      // Soft Gold/Yellow
+      tag: 'text-[#808080]',     // Gray for braces
+      attr: 'text-[#9cdcfe]',    // Light Blue for attributes
+      type: 'text-[#4ec9b0]'     // Teal for types/classes
     }
+  },
   };
 
   const active = codeThemes[theme as keyof typeof codeThemes];
 
   // 2. Dynamic One-Pass Highlighter
   const highlightCode = (code: string) => {
-    if (!code) return "";
-    let escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  if (!code) return "";
+  let escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    const s = active.syntax; 
+  const s = active.syntax; 
 
-    return escaped.replace(
-      /\/\/.*|(&quot;.*?&quot;|'.*?'|`.*?`)\b(const|let|var|function|return|if|else|import|export|from|class|await|async|default)\b|\b(\d+)\b|\b([A-Z]\w+|[a-z_]\w*(?=\s*\())|(&lt;\/?[a-z0-9]+|&gt;|\{|\})/g,
-      (match) => {
-        // We remove the inner `${}` logic and just use the variable directly
-        if (match.startsWith('//')) return `<span class="text-slate-500 italic">${match}</span>`;
-        
-        if (match.startsWith('&quot;') || match.startsWith("'") || match.startsWith("`")) 
-          return `<span class="${s.str}">${match}</span>`;
-        
-        if (/\b(const|let|var|function|return|if|else|import|export|from|class|await|async|default)\b/.test(match)) 
-          return `<span class="${s.kw}">${match}</span>`;
-        
-        if (/^\d+$/.test(match)) 
-          return `<span class="${s.num}">${match}</span>`;
-        
-        if (/^[A-Z]/.test(match) || match.includes('(')) 
-          return `<span class="${s.fn}">${match}</span>`;
-        
-        if (match.startsWith('&lt;') || match === '&gt;' || match === '{' || match === '}') 
-          return `<span class="${s.tag}">${match}</span>`;
-        
-        return match;
-      }
-    );
-  };
+  return escaped.replace(
+    /\/\/.*|(&quot;.*?&quot;|'.*?'|`.*?`)\b(const|let|var|function|return|if|else|import|export|from|class|await|async|default|public|private|interface|type|enum)\b|\b(string|number|boolean|any|void|unknown|never|Object|Array|Promise)\b|\b(true|false|null|undefined)\b|\b(\d+)\b|\b([A-Z]\w+|[a-z_]\w*(?=\s*\())|([a-zA-Z\-]+)(?=\s*=\s*{|&quot;|')|(&lt;\/?[a-z0-9]+|&gt;|\{|\})/g,
+    (match) => {
+      // 1. Comments
+      if (match.startsWith('//')) return `<span class="text-slate-500 italic">${match}</span>`;
+      
+      // 2. Strings
+      if (match.startsWith('&quot;') || match.startsWith("'") || match.startsWith("`")) 
+        return `<span class="${s.str}">${match}</span>`;
+      
+      // 3. Keywords (const, function, etc.)
+      if (/\b(const|let|var|function|return|if|else|import|export|from|class|await|async|default|public|private|interface|type|enum)\b/.test(match)) 
+        return `<span class="${s.kw}">${match}</span>`;
+
+      // 4. Built-in Types (string, number, any)
+      if (/\b(string|number|boolean|any|void|unknown|never|Object|Array|Promise)\b/.test(match))
+        return `<span class="text-amber-400 font-medium">${match}</span>`;
+
+      // 5. Booleans & Nulls
+      if (/\b(true|false|null|undefined)\b/.test(match))
+        return `<span class="text-orange-500 font-bold">${match}</span>`;
+      
+      // 6. Numbers
+      if (/^\d+$/.test(match)) 
+        return `<span class="${s.num}">${match}</span>`;
+      
+      // 7. Functions & Components
+      if (/^[A-Z]/.test(match) || match.includes('(')) 
+        return `<span class="${s.fn}">${match}</span>`;
+
+      // 8. Attributes (The part before the '=')
+      if (/^[a-zA-Z\-]+$/.test(match) && !/\b(const|let|var)\b/.test(match))
+        return `<span class="text-teal-400 italic">${match}</span>`;
+      
+      // 9. Tags & Braces
+      if (match.startsWith('&lt;') || match === '&gt;' || match === '{' || match === '}') 
+        return `<span class="${s.tag}">${match}</span>`;
+      
+      return match;
+    }
+  );
+};
 
   return (
     <div className="group relative my-10 font-sans">
-      <button onClick={onDelete} className="absolute -left-12 top-2 p-2 text-slate-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-800 rounded-lg shadow-xl">
-        <Trash2 size={16} />
-      </button>
 
       <div className={`rounded-2xl border ${active.border} ${active.bg} overflow-hidden shadow-2xl transition-all duration-500`}>
         <div className={`px-5 py-3 ${active.header} border-b ${active.border} flex items-center justify-between`}>
