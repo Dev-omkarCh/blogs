@@ -5,6 +5,9 @@ import Dashboard, { dashboardLoader } from '@/pages/Dashboard';
 import ErrorPage from '@/pages/ErrorPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import BlogExplorer from './pages/Blogs';
+import Template from './pages/Template';
+import CreateBlog from './pages/CreateBlog';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +25,14 @@ const router = createBrowserRouter([
         // This runs BEFORE the component renders!
         loader: dashboardLoader, 
       },
+      {
+        path: "/blog/create",
+        element: <CreateBlog />
+      },
+      {
+        path: "/blog/template",
+        element: <Template />
+      },
     ],
   },
   {
@@ -32,6 +43,10 @@ const router = createBrowserRouter([
     path: '/signup',
     element: <Signup />
   },
+  {
+    path: '/blogs',
+    element: <BlogExplorer />
+  }
 ]);
 
 export default router;
