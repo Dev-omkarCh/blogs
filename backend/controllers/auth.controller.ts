@@ -123,7 +123,14 @@ export const login = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
     try {
-        res.send("logout Controller works");
+        const refreshToken = req.cookies?.refreshToken;
+        if(!refreshToken) return res.status(400).json({ error : "No refresh token found in cookies"});
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+        return res.status(200).json({ message : "User logged out successfully"});
     } catch (error: any) {
         console.log(`Error in logout Controller : ` + error?.message);
         return res.status(500).send(`Error in logout Controller : ` + error?.message);

@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Menu, 
-  X, 
-  PenSquare, 
-  Bell, 
-  ChevronDown, 
-  BookOpen 
+import { useState } from 'react';
+import {
+  Search,
+  Menu,
+  X,
+  PenSquare,
+  Bell,
+  BookOpen,
+  ChevronLeft,
+  LogIn
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import UserMenu from './UserMenu';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/app/store';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector((state : RootState) => state.authUser.isAuthenticated);
 
   const categories = [
     { name: 'Technology', href: '#' },
@@ -24,10 +31,12 @@ const Navbar = () => {
     <nav className="fixed w-full z-50 top-0 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          
+          <button onClick={() => navigate(-1)}>
+            <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
+          </button>
           {/* Logo Section */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="bg-linear-to-br from-indigo-500 to-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
               <BookOpen size={22} className="text-white" />
             </div>
             <span className="text-xl font-bold text-white tracking-tight hidden sm:block">
@@ -38,8 +47,8 @@ const Navbar = () => {
           {/* Desktop Search Bar */}
           <div className="hidden lg:flex flex-1 max-w-md relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search articles, tags, authors..."
               className="w-full bg-slate-900/50 border border-slate-800 text-slate-200 text-sm rounded-full py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             />
@@ -60,15 +69,15 @@ const Navbar = () => {
 
           {/* Action Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <button 
+            <button
               className="p-2 text-slate-400 hover:text-white md:hidden"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               <Search size={20} />
             </button>
-            
-            <button 
-                className="hidden sm:flex p-2 text-slate-400 hover:text-white relative rounded-full 
+
+            <button
+              className="hidden sm:flex p-2 text-slate-400 hover:text-white relative rounded-full 
                 bg-slate-900/50 border border-slate-800 outline-none 
                 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all focus:text-white"
             >
@@ -76,10 +85,26 @@ const Navbar = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-slate-950"></span>
             </button>
 
-            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-md shadow-indigo-500/10">
+            <button
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 
+              rounded-full text-sm font-semibold transition-all shadow-md shadow-indigo-500/10"
+              onClick={() => navigate('/blog/create')}
+            >
               <PenSquare size={18} />
               <span className="hidden sm:inline">Write</span>
             </button>
+
+            <div>
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <Link to="/login" className="hidden sm:flex p-2 text-slate-400 hover:text-white relative rounded-full 
+                bg-slate-900 border border-slate-700 outline-none items-center px-3
+                focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all focus:text-white">
+                  Login
+                </Link>
+              )}
+            </div>
 
             {/* Mobile Toggle */}
             <button
@@ -95,9 +120,9 @@ const Navbar = () => {
       {/* Mobile Search Overlay */}
       {isSearchOpen && (
         <div className="md:hidden p-4 bg-slate-950 border-b border-slate-800">
-          <input 
+          <input
             autoFocus
-            type="text" 
+            type="text"
             placeholder="Search the blog..."
             className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg py-2 px-4 outline-none"
           />

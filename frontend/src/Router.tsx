@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '@/layouts/RootLayout';
 import Home from '@/pages/Home';
-import Dashboard, { dashboardLoader } from '@/pages/Dashboard';
+import Dashboard from '@/pages/Dashboard';
 import ErrorPage from '@/pages/ErrorPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -9,6 +9,8 @@ import BlogExplorer from './pages/Blogs';
 import Template from './pages/Template';
 import CreateBlog from './pages/CreateBlog';
 import BlogView from './pages/BlogPage';
+import PrivateRoute from './components/PrivateRoutes';
+import DashboardSidebar from './components/dashboard/SideBar';
 
 const router = createBrowserRouter([
   {
@@ -21,14 +23,13 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/dashboard",
-        element: <Dashboard />,
-        // This runs BEFORE the component renders!
-        loader: dashboardLoader, 
-      },
-      {
-        path: "/blog/create",
-        element: <CreateBlog />
+        element: <PrivateRoute />,
+        children: [
+          {
+          path: "/blog/create",
+          element: <CreateBlog />
+          },
+        ]
       },
       {
         path: "/blog/template",
@@ -45,13 +46,20 @@ const router = createBrowserRouter([
     element: <Login />
   },
   {
+    path: "/dashboard",
+    element: (<DashboardSidebar>
+      <Dashboard />
+      </DashboardSidebar>),
+  },
+  {
     path: '/signup',
     element: <Signup />
   },
   {
     path: '/blogs',
     element: <BlogExplorer />
-  }
+  },
+
 ]);
 
 export default router;
