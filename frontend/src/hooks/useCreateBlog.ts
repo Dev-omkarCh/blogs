@@ -16,6 +16,7 @@ const useCreateBlog = () => {
 
     const [ isLoading, setIsLoading ] = useState(false);
     const navigate = useNavigate();
+    const userId = '693c4e935bc2a5acef46c5ba';
     
     const createBlog = async({ content, title, author, category, tags, publish } : CreateBlogParams) => {
 
@@ -33,7 +34,8 @@ const useCreateBlog = () => {
                 author : author,
                 category : category,
                 tags : tags,
-                publish : publish,
+                publish : publish, 
+                userId
             });
             const blog = res.data?.blog;
             console.log(blog);

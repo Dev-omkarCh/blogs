@@ -1,16 +1,22 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import CodeBlock from '@/components/createBlog/CodeBlock';
 import {
-  Clock,
-  Calendar,
   Send,
   MessageSquare,
-  Heart
+  Heart,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import ShareModal from '@/components/viewBlog/ShareModal';
 import toast from 'react-hot-toast';
+import YouTubeBlock from '@/components/createBlog/YoutubeBlock';
+import Quote from '@/components/viewBlog/Ouote';
+import EndBlog from '@/components/viewBlog/EndBlog';
+import AlertNote from '@/components/viewBlog/AlertNote';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/app/store';
 
 interface Blog {
   _id: string;
@@ -31,12 +37,13 @@ const BlogView = () => {
   const { id } = useParams();
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  // const [scrollProgress, setScrollProgress] = useState(0);
   const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
   const [likes, setLikes] = useState<string[]>([]); // Array of User IDs
   const [comments, setComments] = useState<any[]>([]);
   const [isLiked, setIsLiked] = useState(false);
-  const currentUserId = "693c4e935bc2a5acef46c5ba"; // Get this from your Auth context
+  const currentUserId = useSelector((state: RootState) => state.authUser.user?._id); // Get this from your Auth context
+  const isAuthenticated = useSelector((state: RootState) => state.authUser.isAuthenticated);
   const [commentText, setCommentText] = useState("");
 
   // Dynamic Scroll Progress Logic
@@ -62,11 +69,11 @@ const BlogView = () => {
   }, [id]);
 
   useEffect(() => {
-    if (blog && blog.stats) {
-      setLikes(blog.stats?.likes || []);
+    if (blog && blog.likes) {
+      setLikes(blog.likes || []);
       // Check if current user has already liked the post
-      if(blog.stats?.likes?.length > 0){
-        setIsLiked(blog.stats?.likes?.includes(currentUserId));
+      if(blog.likes?.length > 0){
+        setIsLiked(blog.likes?.includes(currentUserId));
       }
     }
     if(blog && blog.comments){
@@ -87,12 +94,15 @@ const BlogView = () => {
         day: "numeric", 
         year: "numeric" 
     });
-};
+  };
 
-  // 2. Updated Like Handler
   const handleLike = async () => {
     try {
 
+      if (!isAuthenticated && !currentUserId) {
+        toast.error("Login to like the post.");
+        return;
+      }
       const response = await axios.post(`http://localhost:4000/api/blogs/${blog._id}/like`, {
         userId: currentUserId
       });
@@ -107,9 +117,14 @@ const BlogView = () => {
     }
   };
 
-  // 3. Updated Comment Handler
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if(!isAuthenticated && !currentUserId) {
+      toast.error("Login to comment on the post.");
+      return;
+    }
+
     if (!commentText.trim()) return;
 
     try {
@@ -118,15 +133,12 @@ const BlogView = () => {
         comment: commentText
       });
 
-      console.log(response.data);
+      console.log(response.data.newComment);
 
       // The backend should return the newly created comment object
       setBlog((prev: Blog) => ({
         ...prev,
-        stats: {
-          ...prev.stats,
-          comments: [...(prev.stats?.comments || []), response.data.newComment as Comment]
-        }
+        comments: response.data.newComment,
       }));
       setCommentText("");
     } catch (err) {
@@ -163,11 +175,14 @@ const BlogView = () => {
               {blog.content.map((block: any) => (
                 <div key={block.id}>
                   {block.type === 'text' && (
-                    <div className={`text-xl leading-relaxed opacity-90 ${block.color}`} dangerouslySetInnerHTML={{ __html: block.html }} />
+                    <div className={`text-xl leading-relaxed opacity-90 ${block?.color}`} >{block.content}</div>
                   )}
                   {block.type === 'h2' && <h2 className="text-4xl font-black text-white mt-16 mb-4">{block.data.text}</h2>}
                   {block.type === 'code' && <CodeBlock data={block.data} onDelete={() => { }} />}
-                  {/* ... other block types (youtube, divider, etc.) same as before */}
+                  {block.type === 'youtube' && <YouTubeBlock data={block.data} />}
+                  {block.type === 'endBlog' && <EndBlog data={block.data} />}
+                  {block.type === 'quote' && <Quote block={block} />}
+                  {block.type === 'alert' && <AlertNote block={block} />}
                 </div>
               ))}
             </article>
@@ -254,13 +269,13 @@ const BlogView = () => {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white uppercase">{blog.author[0]}</div>
                   <div>
-                    <p className="text-sm font-bold text-white">{blog.author}</p>
+                    <p className="text-sm font-bold text-white capitalize">{blog.author}</p>
                     <p className="text-xs text-slate-500">Full Stack Developer</p>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-slate-500">
-                  {/* <span className="text-xs flex items-center gap-1.5"><Calendar size={14} /> {new Date(blog.createdAt).toLocaleDateString()}</span>
-                  <span className="text-xs flex items-center gap-1.5"><Clock size={14} /> {blog.stats?.readTime}</span> */}
+                  <span className="text-xs flex items-center gap-1.5"><Calendar size={14} /> {formatDate(blog.createdAt)}</span>
+                  <span className="text-xs flex items-center gap-1.5"><Clock size={14} /> {blog.stats?.readTime}</span>
                 </div>
               </div>
 

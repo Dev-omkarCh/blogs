@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from '../features/counter/counterSlice';
-import authUser, { logout } from '../features/auth/authSlice';
+import authUser from '../features/auth/authSlice';
 
 
 

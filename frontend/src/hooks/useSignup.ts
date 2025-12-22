@@ -35,7 +35,11 @@ const useSignup = () => {
             // localStorage
             localStorage.setItem("authUser",JSON.stringify(user));
 
-            dispatch(setCredentials({ user, accessToken }));
+            dispatch(setCredentials({ 
+                user, 
+                accessToken, 
+                isAuthenticated: true
+            }));
             navigate("/dashboard");
         }
         catch(error : any){

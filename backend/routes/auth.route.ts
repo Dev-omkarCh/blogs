@@ -1,6 +1,5 @@
 import express from 'express';
 import { generateAccessToken, login, logout, signup } from '../controllers/auth.controller';
-import protectedRoute from '../middleware/protectedRoute';
 const router = express.Router();
 
 router.post('/signup', signup);

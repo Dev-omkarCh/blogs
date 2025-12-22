@@ -1,11 +1,10 @@
-import React, { useEffect, useState, type ChangeEvent, type KeyboardEventHandler } from 'react';
+import { useState, type ChangeEvent} from 'react';
 import {
-  Plus, Code, Layout, Quote, AlertCircle,
+  Plus, Code, Quote, AlertCircle,
   ChevronLeft, Trash2, Heading1, List,
-  Columns, ImageIcon, Check, MousePointer2,
+  Columns, ImageIcon, MousePointer2,
   Hash,
   Layers,
-  MoreHorizontal,
   User,
   FolderOpen,
   SaveIcon,
@@ -27,6 +26,7 @@ import TagsInput from '@/components/createBlog/Tag';
 import CategoryDropdown from '@/components/createBlog/CategoryDropdown';
 import CodeBlock from '@/components/createBlog/CodeBlock';
 import YouTubeBlock from '@/components/createBlog/YoutubeBlock';
+import { useNavigate } from 'react-router-dom';
 
 const VisualBlogEditor = () => {
   const [blocks, setBlocks] = useState<any[]>([
@@ -37,6 +37,7 @@ const VisualBlogEditor = () => {
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [tags, setTags] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const [blog, setBlog] = useState({
     title: '',
@@ -103,8 +104,8 @@ const VisualBlogEditor = () => {
     setBlocks(blocks.map(b => b.id === id ? { ...b, color: colorClass } : b));
   };
 
-  const addTextBlock = (content: string) => {
-    setBlocks(prev => [...prev, { id: Math.random().toString(), type: 'text', content: content }])
+  const addTextBlock = () => {
+    setBlocks(prev => [...prev, { id: Math.random().toString(), type: 'text', content: '' }])
   };
 
   const addBlock = () => {
@@ -146,7 +147,12 @@ const VisualBlogEditor = () => {
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <nav className="h-16 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between px-6 sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4">
-          <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
+          <button>
+            <ChevronLeft 
+              size={20} className="text-slate-500 hover:text-white transition-colors"
+              onClick={() => navigate(-1)}
+            />
+          </button>
           <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Auto-saving</span>
@@ -190,7 +196,8 @@ const VisualBlogEditor = () => {
                   value={block.content || ''}
                   onChange={(e) => setBlocks(blocks.map(b => b.id === block.id ? { ...b, content: e.target.value } : b))}
                   onKeyUp={(e) => {
-                    if (e.key === "Enter") addTextBlock(block.content)
+                    if (e.key === "Enter") addTextBlock();
+                    if(e.key === "Backspace" && block.content === "") deleteBlock(block.id);
                   }}
                   autoFocus={isAutoFocus(block)}
                   placeholder="Type '/' for commands or use the sidebar..."

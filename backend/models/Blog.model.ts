@@ -1,26 +1,14 @@
 import mongoose from "mongoose";
-/*
-    id: ...,
-    title: rust,
-    excerpt : Exploring the deep architectural patterns that modern engineering teams use to maintain high availability...
-    author : Omkar
-    category : Backend
-    stats: {
-        views: 10, # only Auth users are counted
-        anoymys: 100, # only Non-Auth users are counted
-        likes: 5, # Only Auth users can like
-        comments: 24, # Only Auth users can comment
-        readTime: 8min
-        isHot: blog.latest + ( blog.mostLikes + blog.mostComments + blog.mostAnoymysViews )
-        image: ...
-        isPopular : blog.mostLikes + blog.mostComments
-    }
 
-*/
 const blogSchema = new mongoose.Schema({
     title : { type: String, required: true },
     content : { type: [], required: true },
     author : { type: String, required: true },
+    userId : {
+        type : mongoose.Types.ObjectId,
+        ref: 'User',
+        required : true,
+    },
     tags : [String],
     category : { type: String, required: true },
     stats : { 
@@ -28,9 +16,13 @@ const blogSchema = new mongoose.Schema({
         default: {
             views : 0,
             anonymous : 0,
-            likes : [mongoose.Types.ObjectId],
             readTime : "5 min",
         }
+    },
+    likes : {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'User',
+        default: []
     },
     comments : {
         type: [mongoose.Schema.Types.ObjectId],
@@ -38,7 +30,10 @@ const blogSchema = new mongoose.Schema({
         default: []
     }, 
     status : { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
-    image : { type: String },
+    image : { 
+        type: String,
+        default: ''
+    },
     published : { type: Boolean, default: false },
 
 }, { timestamps : true });

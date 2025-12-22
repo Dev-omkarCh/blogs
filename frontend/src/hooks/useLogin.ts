@@ -29,8 +29,12 @@ const useLogin = () => {
             // localStorage
             localStorage.setItem("authUser",JSON.stringify(user));
 
-            dispatch(setCredentials({ user, accessToken }));
-            navigate("/dashboard");
+            dispatch(setCredentials({ 
+                user, 
+                accessToken, 
+                isAuthenticated: true
+            }));
+            navigate("/blogs");
         }
         catch(error : any){
             toast.error(error?.message);
