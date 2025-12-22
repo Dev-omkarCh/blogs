@@ -104,7 +104,7 @@ const FullLandingPage: React.FC = () => {
             <button 
               className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl 
               font-bold transition-all flex items-center justify-center gap-2 group"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/blog/create")}
             >
               Start Your Blog <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>

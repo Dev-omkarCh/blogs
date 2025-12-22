@@ -21,6 +21,11 @@ const blogSchema = new mongoose.Schema({
     title : { type: String, required: true },
     content : { type: [], required: true },
     author : { type: String, required: true },
+    userId : {
+        type : mongoose.Types.ObjectId,
+        ref: 'User',
+        required : true,
+    },
     tags : [String],
     category : { type: String, required: true },
     stats : { 
@@ -38,7 +43,7 @@ const blogSchema = new mongoose.Schema({
         default: []
     }, 
     status : { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
-    image : { type: String },
+    image : { type: String, default: '' },
     published : { type: Boolean, default: false },
 
 }, { timestamps : true });

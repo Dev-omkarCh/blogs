@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import ShareModal from '@/components/viewBlog/ShareModal';
 import toast from 'react-hot-toast';
+import YouTubeBlock from '@/components/createBlog/YoutubeBlock';
+import EndBlog from '@/components/createBlog/EndBlog';
+import Quote from '@/components/createBlog/Quote';
+import AlertNote from '@/components/createBlog/AlertNote';
 
 interface Blog {
   _id: string;
@@ -118,15 +122,12 @@ const BlogView = () => {
         comment: commentText
       });
 
-      console.log(response.data);
+      console.log(response.data.newComment);
 
       // The backend should return the newly created comment object
       setBlog((prev: Blog) => ({
         ...prev,
-        stats: {
-          ...prev.stats,
-          comments: [...(prev.stats?.comments || []), response.data.newComment as Comment]
-        }
+        comments: response.data.newComment,
       }));
       setCommentText("");
     } catch (err) {
@@ -163,11 +164,14 @@ const BlogView = () => {
               {blog.content.map((block: any) => (
                 <div key={block.id}>
                   {block.type === 'text' && (
-                    <div className={`text-xl leading-relaxed opacity-90 ${block.color}`} dangerouslySetInnerHTML={{ __html: block.html }} />
+                    <div className={`text-xl leading-relaxed opacity-90 ${block?.color}`} >{block.content}</div>
                   )}
                   {block.type === 'h2' && <h2 className="text-4xl font-black text-white mt-16 mb-4">{block.data.text}</h2>}
                   {block.type === 'code' && <CodeBlock data={block.data} onDelete={() => { }} />}
-                  {/* ... other block types (youtube, divider, etc.) same as before */}
+                  {block.type === 'youtube' && <YouTubeBlock data={block.data} />}
+                  {block.type === 'endBlog' && <EndBlog data={block.data} />}
+                  {block.type === 'quote' && <Quote block={block} />}
+                  {block.type === 'alert' && <AlertNote block={block} />}
                 </div>
               ))}
             </article>
@@ -197,7 +201,7 @@ const BlogView = () => {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Add to the discussion..."
-                    className="w-full bg-slate-900/30 border border-slate-800 rounded-[2rem] p-6 text-white outline-none focus:border-indigo-500 focus:bg-slate-900/50 transition-all min-h-[120px] resize-none"
+                    className="w-full bg-slate-900/30 border border-slate-800 rounded-4xl p-6 text-white outline-none focus:border-indigo-500 focus:bg-slate-900/50 transition-all min-h-[120px] resize-none"
                   />
                   <div className="absolute bottom-4 right-4 flex items-center gap-4">
                     <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest opacity-0 group-focus-within:opacity-100 transition-opacity">Press Cmd + Enter</span>
@@ -215,12 +219,12 @@ const BlogView = () => {
               <div className="space-y-8">
                 {comments.length > 0 ? comments.map((comment) => (
                   <div key={Math.random() * 10} className="flex gap-5 group animate-in fade-in slide-in-from-left-4 duration-500">
-                    {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
-                      {c.author[0]}
-                    </div> */}
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
+                      {comment.author}
+                    </div>
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3">
-                        {/* <span className="text-sm font-bold text-white">{c.author}</span> */}
+                        <span className="text-sm font-bold text-white">{comment?.userId?.username}</span>
                         <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
                           {formatDate(comment.createdAt)}
                         </span>
@@ -259,8 +263,8 @@ const BlogView = () => {
                   </div>
                 </div>
                 <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-slate-500">
-                  {/* <span className="text-xs flex items-center gap-1.5"><Calendar size={14} /> {new Date(blog.createdAt).toLocaleDateString()}</span>
-                  <span className="text-xs flex items-center gap-1.5"><Clock size={14} /> {blog.stats?.readTime}</span> */}
+                  <span className="text-xs flex items-center gap-1.5"><Calendar size={14} /> {new Date(blog.createdAt).toLocaleDateString()}</span>
+                  <span className="text-xs flex items-center gap-1.5"><Clock size={14} /> {blog.stats?.readTime}</span>
                 </div>
               </div>
 

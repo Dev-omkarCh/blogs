@@ -1,9 +1,11 @@
 import { Filter } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SideBar = () => {
     const categories = ["All", "Frontend", "Backend", "AI & ML", "DevOps", "Cloud", "Career"];
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const navigate = useNavigate();
     return (
         <aside className="lg:col-span-1 space-y-8">
             <div>
@@ -29,7 +31,10 @@ const SideBar = () => {
             <div className="p-6 rounded-2xl bg-linear-to-br from-indigo-600 to-blue-700 text-white">
                 <h4 className="font-bold mb-2">Write for us</h4>
                 <p className="text-xs text-indigo-100 mb-4 leading-relaxed">Share your knowledge with 100k+ developers and build your brand.</p>
-                <button className="w-full py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors">
+                <button 
+                    className="w-full py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors"
+                    onClick={() => navigate('/blog/create')}
+                >
                     Start Writing
                 </button>
             </div>

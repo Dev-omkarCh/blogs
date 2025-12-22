@@ -6,12 +6,15 @@ import {
   PenSquare, 
   Bell, 
   ChevronDown, 
-  BookOpen 
+  BookOpen, 
+  ChevronLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
   const categories = [
     { name: 'Technology', href: '#' },
@@ -24,6 +27,9 @@ const Navbar = () => {
     <nav className="fixed w-full z-50 top-0 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
+        <button onClick={() => navigate(-1)}>
+            <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
+        </button>
           
           {/* Logo Section */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -76,7 +82,11 @@ const Navbar = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-slate-950"></span>
             </button>
 
-            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-md shadow-indigo-500/10">
+            <button 
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-full 
+            text-sm font-semibold transition-all shadow-md shadow-indigo-500/10"
+            onClick={()=> navigate('/blog/create')}
+            >
               <PenSquare size={18} />
               <span className="hidden sm:inline">Write</span>
             </button>

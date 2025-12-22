@@ -1,8 +1,12 @@
+import axios from "axios";
 import { Clock, Eye, Flame, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 // Mock data generator for infinite scroll
 const generateBlogs = (page: number) => {
+
   return Array.from({ length: 6 }).map((_, i) => ({
     id: `blog-${page}-${i}`,
     title: `Scaling ${['React', 'Rust', 'AI', 'Node'][i % 4]} Applications to ${page * 10}k Users`,
@@ -22,6 +26,7 @@ const BlogsFeed = () => {
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
     const [page, setPage] = useState(1);
+    const navigate = useNavigate();
 
     const tabs = [
         { name: 'Latest', icon: Clock },
@@ -31,30 +36,50 @@ const BlogsFeed = () => {
 
     // Infinite Scroll Observer
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-        (entries) => {
-            if (entries[0].isIntersecting && !loading) {
-            loadMoreBlogs();
-            }
-        },
-        { threshold: 1.0 }
-        );
+    // useEffect(() => {
+    //     const observer = new IntersectionObserver(
+    //     (entries) => {
+    //         if (entries[0].isIntersecting && !loading) {
+    //         loadMoreBlogs();
+    //         }
+    //     },
+    //     { threshold: 1.0 }
+    //     );
 
-        if (observerTarget.current) observer.observe(observerTarget.current);
-        return () => observer.disconnect();
-    }, [loading]);
+    //     if (observerTarget.current) observer.observe(observerTarget.current);
+    //     return () => observer.disconnect();
+    // }, [loading]);
 
-    const loadMoreBlogs = () => {
-        setLoading(true);
-        // Simulate API delay
-        setTimeout(() => {
-        const newBlogs = generateBlogs(page);
-        setBlogs((prev) => [...prev, ...newBlogs]);
-        setPage((prev) => prev + 1);
-        setLoading(false);
-        }, 800);
+    const getBlogs = async() => {
+        try {
+            const response = await axios.get("/api/blogs/");
+            console.log(response.data);
+            setBlogs(response.data?.blogs);
+        } catch (error : any) {
+            console.error(error?.message || "Failed to fetch blogs")
+            toast.error(error?.message || "Failed to fetch blogs");
+        }
+    }
+    useEffect(()=>{
+        getBlogs();
+    },[]);
+
+    const handleBlogClick = (id : string) => {
+        navigate(`/blog/${id}`);
     };
+
+    console.log(blogs);
+
+    // const loadMoreBlogs = () => {
+    //     setLoading(true);
+    //     // Simulate API delay
+    //     setTimeout(() => {
+    //     const newBlogs = generateBlogs(page);
+    //     setBlogs((prev) => [...prev, ...newBlogs]);
+    //     setPage((prev) => prev + 1);
+    //     setLoading(false);
+    //     }, 800);
+    // };
 
     return (
         <main className="lg:col-span-3">
@@ -81,39 +106,40 @@ const BlogsFeed = () => {
             <div className="grid grid-cols-1 gap-6">
                 {blogs.map((blog) => (
                     <article
-                        key={blog.id}
+                        key={blog?._id || Math.random() * 10}
                         className="group bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 sm:p-6 hover:bg-slate-900/60 transition-all flex flex-col sm:flex-row gap-6"
+                        onClick={() => handleBlogClick(blog?._id)}
                     >
                         <div className="w-full sm:w-48 h-32 rounded-xl overflow-hidden shrink-0 border border-slate-800">
-                            <img src={blog.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                            <img src={blog?.image || '/placeholder.png'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
                         </div>
 
                         <div className="grow flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                                        {blog.category}
+                                        {blog?.category || ""}
                                     </span>
-                                    {blog.isHot && <span className="flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded animate-pulse"><Flame size={10} /> HOT</span>}
+                                    {blog?.isHot && <span className="flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded animate-pulse"><Flame size={10} /> HOT</span>}
                                 </div>
                                 <h2 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors mb-2 leading-snug">
-                                    {blog.title}
+                                    {blog?.title || ""}
                                 </h2>
                                 <p className="text-slate-400 text-sm line-clamp-2 leading-relaxed">
-                                    {blog.excerpt}
+                                    {blog?.content[0]?.content || ""}
                                 </p>
                             </div>
 
                             <div className="flex items-center justify-between mt-6">
                                 <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-indigo-400 border border-slate-700">
-                                        {blog.author.avatar}
+                                        {blog?.author?.avatar || ""}
                                     </div>
-                                    <span className="text-xs text-slate-500">{blog.author.name}</span>
+                                    <span className="text-xs text-slate-500">{blog?.author || ""}</span>
                                 </div>
                                 <div className="flex items-center gap-4 text-slate-500">
-                                    <span className="flex items-center gap-1.5 text-[11px] font-medium"><Eye size={14} /> {blog.stats.views}</span>
-                                    <span className="flex items-center gap-1.5 text-[11px] font-medium"><Clock size={14} /> {blog.stats.readTime}</span>
+                                    <span className="flex items-center gap-1.5 text-[11px] font-medium"><Eye size={14} /> {0}</span>
+                                    <span className="flex items-center gap-1.5 text-[11px] font-medium"><Clock size={14} /> {'5 min'}</span>
                                 </div>
                             </div>
                         </div>
@@ -122,14 +148,14 @@ const BlogsFeed = () => {
             </div>
 
             {/* Loading State & Observer Target */}
-            <div ref={observerTarget} className="py-12 flex justify-center">
+            {/* <div ref={observerTarget} className="py-12 flex justify-center">
                 {loading && (
                     <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                         <span className="text-xs text-slate-500 font-medium tracking-widest uppercase">Fetching more stories...</span>
                     </div>
                 )}
-            </div>
+            </div> */}
         </main>
     );
 };

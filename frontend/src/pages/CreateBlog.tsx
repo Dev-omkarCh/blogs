@@ -27,6 +27,7 @@ import TagsInput from '@/components/createBlog/Tag';
 import CategoryDropdown from '@/components/createBlog/CategoryDropdown';
 import CodeBlock from '@/components/createBlog/CodeBlock';
 import YouTubeBlock from '@/components/createBlog/YoutubeBlock';
+import { useNavigate } from 'react-router-dom';
 
 const VisualBlogEditor = () => {
   const [blocks, setBlocks] = useState<any[]>([
@@ -37,6 +38,7 @@ const VisualBlogEditor = () => {
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [tags, setTags] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const [blog, setBlog] = useState({
     title: '',
@@ -61,6 +63,7 @@ const VisualBlogEditor = () => {
     };
   }
   const { createBlog, isLoading } = useCreateBlog();
+  
 
   const templates = [
     { id: 'h2', name: "Section Heading", icon: Heading1, fields: ['text'], color: "text-white" },
@@ -146,7 +149,9 @@ const VisualBlogEditor = () => {
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <nav className="h-16 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between px-6 sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4">
-          <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
+          <button onClick={() => navigate(-1)}>
+            <ChevronLeft className="text-slate-500 hover:text-white cursor-pointer" />
+          </button>
           <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Auto-saving</span>
