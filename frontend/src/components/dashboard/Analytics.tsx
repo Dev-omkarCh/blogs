@@ -1,148 +1,132 @@
 import React, { useEffect, useState } from 'react';
-import {
-  BarChart3, TrendingUp, Zap,
-  Map as MapIcon, Laptop, Smartphone,
-  Layers, ChevronRight
-} from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { 
+  TrendingUp, Users, Heart, MessageCircle, 
+  Layers, Star, ArrowUpRight, MousePointer2 
+} from 'lucide-react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, BarChart, Bar 
+} from 'recharts';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/app/store';
 import axiosInstance from '@/lib/utils';
-import toast from 'react-hot-toast';
 
-const AnalyticsOverview = ({ blogs = [] }: { blogs: any[] }) => {
-  // Logic: Calculate Category Performance
-  const categoryStats = blogs.reduce((acc: any, blog) => {
-    const cat = blog.category || 'Uncategorized';
-    acc[cat] = (acc[cat] || 0) + (blog.stats?.views || 0);
-    return acc;
-  }, {});
-
-  const topCategories = Object.entries(categoryStats)
-    .sort(([, a]: any, [, b]: any) => b - a)
-    .slice(0, 4);
-  
-  // Inside your Analytics Tab
-  const [weeklyData, setWeeklyData] = useState([{
-    day: 'Mon', views: 1200
-  }]);
-
-  // Logic: Calculate max views to scale the bars correctly
-  const maxViews = Math.max(...weeklyData.map(d => d.views), 1);
+const BlogAnalysis = () => {
+  const userId = useSelector((state: RootState) => state.authUser.user?._id);
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchWeeklyData = async () => {
+    const fetchAnalytics = async () => {
       try {
-        const response = await axiosInstance.get('/api/blogs/weekly');
-        const data = await response.data;
-        setWeeklyData(data);
-        console.log(data);
-
-      } catch (error : any) {
-        console.error(error?.message || "Failed to fetch blogs");
-        toast.error(error?.message || "Failed to fetch blogs");
-      }
+        const res = await axiosInstance.get(`/api/blogs/analytics/${userId}`);
+        setData(res.data);
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
-    fetchWeeklyData();
-  }, []);
+    fetchAnalytics();
+  }, [userId]);
+
+  if (loading) return <div className="min-h-screen bg-slate-950" />; // Replace with your GlowSpinner
+
+  const stats = [
+    { label: 'Total Views', value: data?.summary?.totalViews, icon: TrendingUp, color: 'text-blue-400' },
+    { label: 'Likes', value: data?.summary?.totalLikes, icon: Heart, color: 'text-rose-400' },
+    { label: 'Comments', value: data?.summary?.totalComments, icon: MessageCircle, color: 'text-emerald-400' },
+    { label: 'Guest Reads', value: data?.summary?.totalAnonymous, icon: Users, color: 'text-amber-400' },
+  ];
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <header className="flex justify-between items-end">
-        <div>
-          <h1 className="text-6xl font-black text-white tracking-tighter mb-2">Analytics</h1>
-          <p className="text-slate-500 italic">Data-driven insights for your content.</p>
-        </div>
-        <div className="hidden md:block pb-2">
-          <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full uppercase tracking-widest">
-            System Live
-          </span>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-950 text-slate-200 p-6 lg:p-12 font-sans">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* --- HEADER --- */}
+        <header className="mb-12">
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Content Intelligence</h1>
+          <p className="text-slate-500 font-medium">Deep dive into your story performance and audience engagement.</p>
+        </header>
 
-      {/* --- GRID LAYOUT --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* 1. MAIN PERFORMANCE CHART (Already implemented, keep logic here) */}
-        <div className="lg:col-span-2 bg-[#0a0c14] border border-white/5 p-8 rounded-[3rem]">
-          <h3 className="text-xs font-black text-white uppercase tracking-widest mb-8">Weekly Engagement</h3>
-          <div className="flex items-end justify-between h-40 gap-2">
-            {/* Simplified bars using CSS heights */}
-            {[40, 70, 45, 90, 65, 55, 80].map((h, i) => (
-              <div key={i} className="flex-1 bg-indigo-500/10 rounded-t-xl relative group overflow-hidden">
-                <div
-                  className="absolute bottom-0 w-full bg-indigo-500 transition-all duration-1000 group-hover:bg-indigo-400"
-                  style={{ height: `${h}%` }}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-4 text-[8px] font-black text-slate-600 uppercase tracking-widest px-1">
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-          </div>
-        </div>
-
-        {/* 2. CATEGORY BREAKDOWN (Easy Implementation) */}
-        <div className="flex items-end justify-between h-40 gap-2">
-          {weeklyData.map((data, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2">
-              <div className="w-full bg-indigo-500/10 rounded-t-xl relative group h-full">
-                <div
-                  className="absolute bottom-0 w-full bg-indigo-500 rounded-t-xl transition-all duration-1000"
-                  style={{ height: `${(data.views / maxViews) * 100}%` }}
-                />
-                {/* Tooltip on hover */}
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-black text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  {data.views}
-                </div>
-              </div>
-              <span className="text-[8px] font-black text-slate-600 uppercase">{data.day}</span>
+        {/* --- STATS GRID --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {stats.map((stat, i) => (
+            <div key={i} className="bg-slate-900/30 border border-slate-900 p-6 rounded-[2rem] hover:border-indigo-500/30 transition-all">
+              <stat.icon size={20} className={`${stat?.color} mb-4`} />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{stat?.label}</p>
+              <h3 className="text-3xl font-black text-white">{stat?.value?.toLocaleString()}</h3>
             </div>
           ))}
         </div>
 
-        {/* 3. DEVICE & REACH (Medium Difficulty UI) */}
-        <div className="lg:col-span-1 bg-[#0a0c14] border border-white/5 p-8 rounded-[3rem] space-y-8">
-          <h3 className="text-xs font-black text-white uppercase tracking-widest">Device Distribution</h3>
-          <div className="flex items-center gap-6">
-            <div className="flex-1 bg-white/[0.02] p-4 rounded-2xl border border-white/5 flex flex-col items-center">
-              <Laptop size={20} className="text-indigo-400 mb-2" />
-              <span className="text-xl font-black text-white">64%</span>
-              <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Desktop</span>
+        {/* --- CHARTS SECTION --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          
+          {/* Main Traffic Chart */}
+          <div className="lg:col-span-2 bg-slate-900/20 border border-slate-900 rounded-[2.5rem] p-8">
+            <h4 className="text-sm font-black uppercase tracking-widest text-white mb-8">Views Over Time</h4>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.activityData}>
+                  <defs>
+                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#334155" fontSize={10} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
+                  />
+                  <Area type="monotone" dataKey="views" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorViews)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <div className="flex-1 bg-white/[0.02] p-4 rounded-2xl border border-white/5 flex flex-col items-center">
-              <Smartphone size={20} className="text-emerald-400 mb-2" />
-              <span className="text-xl font-black text-white">36%</span>
-              <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Mobile</span>
+          </div>
+
+          {/* Category Distribution */}
+          <div className="bg-slate-900/20 border border-slate-900 rounded-[2.5rem] p-8">
+            <h4 className="text-sm font-black uppercase tracking-widest text-white mb-8">Category Split</h4>
+            <div className="space-y-6">
+              {Object.entries(data?.categoryDistribution).map(([cat, count]: any) => (
+                <div key={cat}>
+                  <div className="flex justify-between text-[10px] font-black uppercase mb-2">
+                    <span className="text-slate-400">{cat}</span>
+                    <span className="text-white">{count} Posts</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-indigo-500 rounded-full" 
+                      style={{ width: `${(count / data?.summary?.blogCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* 4. RECENT MILESTONES (Easy Implementation) */}
-        <div className="lg:col-span-2 bg-[#0a0c14] border border-white/5 p-8 rounded-[3rem]">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xs font-black text-white uppercase tracking-widest">Recent Milestones</h3>
-            <Zap size={16} className="text-amber-400" />
+        {/* --- TOP PERFORMING BLOG --- */}
+        {data.topBlog && (
+          <div className="bg-gradient-to-r from-indigo-900/20 to-slate-900/20 border border-indigo-500/20 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-2xl bg-indigo-600 flex items-center justify-center shrink-0">
+                <Star size={32} className="text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Star Performance</p>
+                <h3 className="text-2xl font-black text-white tracking-tight line-clamp-1">{data?.topBlog?.title}</h3>
+                <p className="text-slate-500 text-xs font-medium">This blog is responsible for {Math.round((data?.topBlog?.stats?.views / data?.summary?.totalViews) * 100)}% of your total traffic.</p>
+              </div>
+            </div>
+            <button className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-400 hover:text-white transition-all">
+              View Stats <ArrowUpRight size={14} />
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MilestoneCard title="10k Total Views" date="Achieved 2 days ago" />
-            <MilestoneCard title="Top Author Badge" date="Achieved this morning" />
-          </div>
-        </div>
-
+        )}
       </div>
     </div>
   );
 };
 
-// --- HELPER COMPONENTS ---
-
-const MilestoneCard = ({ title, date }: any) => (
-  <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all cursor-default group">
-    <div>
-      <p className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors">{title}</p>
-      <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">{date}</p>
-    </div>
-    <ChevronRight size={14} className="text-slate-800" />
-  </div>
-);
-
-export default AnalyticsOverview;
+export default BlogAnalysis;

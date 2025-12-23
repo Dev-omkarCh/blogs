@@ -12,6 +12,7 @@ import blogRoutes from './routes/blog.route';
 import authRoutes from './routes/auth.route';
 import userRoutes from './routes/user.route';
 import queryRoutes from './routes/query.route';
+import supportRoutes from './routes/transaction.route';
 
 // Database connection import
 import connectDb from './db/connectDb';
@@ -56,6 +57,7 @@ app.use('/api/blogs/', blogRoutes);
 app.use('/api/auth/', authRoutes);
 app.use('/api/users/', userRoutes);
 app.use('/api/queries/', queryRoutes);
+app.use('/api/support/', supportRoutes);
 
 app.get("/", (req : Request ,res : Response)=>{
     return res.send("Hello World");

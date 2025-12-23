@@ -63,7 +63,7 @@ const FullLandingPage: React.FC = () => {
       {/* --- NAVBAR --- */}
       <nav className="fixed w-full z-50 top-0 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <div className="bg-indigo-600 p-1.5 rounded-lg">
               <BookOpen size={20} className="text-white" />
             </div>
@@ -130,7 +130,7 @@ const FullLandingPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {hotTopics.map((topic, i) => (
               <div key={i} className="group relative bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden hover:border-indigo-500/40 transition-all duration-300">
-                <div className="aspect-[16/10] overflow-hidden">
+                <div className="aspect-16/10 overflow-hidden">
                   <img src={topic.image} alt={topic.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
                 </div>
                 <div className="p-6">
@@ -189,7 +189,7 @@ const FullLandingPage: React.FC = () => {
       {/* --- TESTIMONIAL CAROUSEL --- */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="min-h-[160px] flex items-center justify-center">
+          <div className="min-h-40 flex items-center justify-center">
             {testimonials.map((t, i) => (
               <div key={i} className={`${i === activeTestimonial ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}`}>
                 <p className="text-2xl md:text-4xl text-slate-200 font-medium tracking-tight mb-8 leading-tight">"{t.text}"</p>

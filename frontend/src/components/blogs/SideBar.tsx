@@ -33,7 +33,7 @@ const SideBar = () => {
                 <p className="text-xs text-indigo-100 mb-4 leading-relaxed">Share your knowledge with 100k+ developers and build your brand.</p>
                 <button 
                     className="w-full py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors"
-                    onClick={() => navigate('/blog/create')}
+                    onClick={() => navigate('/create-blog')}
                 >
                     Start Writing
                 </button>

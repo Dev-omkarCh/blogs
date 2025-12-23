@@ -147,10 +147,9 @@ const VisualBlogEditor = () => {
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <nav className="h-16 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between px-6 sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4">
-          <button>
+          <button onClick={() => navigate(-1)}>
             <ChevronLeft 
               size={20} className="text-slate-500 hover:text-white transition-colors"
-              onClick={() => navigate(-1)}
             />
           </button>
           <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">

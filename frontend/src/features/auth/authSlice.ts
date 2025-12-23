@@ -6,7 +6,7 @@ const initialState = {
   isAuthenticated: false,
   user: null as AuthUser | null,
   token: null,
-  isLoading: true,
+  isLoading: false,
   setIsLoading: (state: any, action: any) => {
     state.isLoading = action.payload;
   },

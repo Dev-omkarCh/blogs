@@ -14,7 +14,7 @@ const PrivateRoute = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       // Only attempt refresh if we don't have an access token in Redux
-      console.log(token);
+      console.log("Private Route token: ",token);
       if (!token) {
         try {
           const response = await axios.get('/api/auth/refresh');
@@ -39,7 +39,11 @@ const PrivateRoute = () => {
   }, []);
 
   if (isInitializing) {
-    return <LoadingSpinner size='100' />; // Don't redirect yet!
+    return (
+      <div className='h-screen w-screen flex flex-col justify-center gap-3 text-indigp-590 items-center bg-slate-900'>
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;

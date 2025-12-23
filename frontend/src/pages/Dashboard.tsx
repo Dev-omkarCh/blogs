@@ -1,4 +1,5 @@
 import type { RootState } from "@/app/store";
+import BlogsFeed from "@/components/blogs/BlogsFeed";
 import AnalyticsOverview from "@/components/dashboard/Analytics";
 import MyBlogs from "@/components/dashboard/MyBlogs";
 import DashboardOverview from "@/components/dashboard/Overview";
@@ -8,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
+import BlogExplorer from "./Blogs";
 
 const BlogDashboard = ({ activeItem = 'dashboard' }: { activeItem?: string }) => {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -16,7 +18,6 @@ const BlogDashboard = ({ activeItem = 'dashboard' }: { activeItem?: string }) =>
 
     useEffect(() => {
     const fetchMyBlogs = async () => {
-      console.log("hello")
       if (!userId) return;
       try {
         setLoading(true);
@@ -53,7 +54,12 @@ const BlogDashboard = ({ activeItem = 'dashboard' }: { activeItem?: string }) =>
 
       {/* Analytics Tab */}
       {activeItem === 'analytics' && (
-        <AnalyticsOverview blogs={blogs} />
+        <AnalyticsOverview />
+      )}
+
+      {/* Analytics Tab */}
+      {activeItem === 'explore' && (
+        <BlogExplorer />
       )}
 
       {/* Analytics Tab */}
