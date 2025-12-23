@@ -7,5 +7,14 @@ module.exports = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  extend: {
+      colors: {
+        // You can define variables that change based on the .dark class
+        dashboard: {
+          bg: 'var(--bg-color)',
+          card: 'var(--card-color)',
+        }
+      }
+    },
   // ... rest of config
 }

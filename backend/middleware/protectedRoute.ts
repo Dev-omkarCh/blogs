@@ -11,14 +11,14 @@ const protectedRoute = (req: Request, res : Response, next : NextFunction) =>{
     const authHeader = req.headers.authorization || req.headers.Authorization;
 
     // Type checking ensures authHeader is treated as a string or undefined
-    if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+    if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer')) {
         return res.status(403).json({ message: 'Unauthorized - Missing or Malformed Access Token' });
     }
 
     // Extract the Access Token
     const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(403).json({ message: 'Unauthorized - Invalid Access Token Format' });
+        return res.status(401).json({ message: 'Unauthorized - Invalid Access Token Format' });
     }
 
     // Verify the Access Token

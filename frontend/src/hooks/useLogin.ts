@@ -34,7 +34,7 @@ const useLogin = () => {
                 accessToken, 
                 isAuthenticated: true
             }));
-            navigate("/blogs");
+            navigate("/dashboard");
         }
         catch(error : any){
             toast.error(error?.message);

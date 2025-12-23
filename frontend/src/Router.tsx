@@ -11,6 +11,7 @@ import CreateBlog from './pages/CreateBlog';
 import BlogView from './pages/BlogPage';
 import PrivateRoute from './components/PrivateRoutes';
 import DashboardSidebar from './components/dashboard/SideBar';
+import TestComponent from './components/TestComponent';
 
 const router = createBrowserRouter([
   {
@@ -26,8 +27,8 @@ const router = createBrowserRouter([
         element: <PrivateRoute />,
         children: [
           {
-          path: "/blog/create",
-          element: <CreateBlog />
+            path: "/blog/create",
+            element: <CreateBlog />
           },
         ]
       },
@@ -46,19 +47,31 @@ const router = createBrowserRouter([
     element: <Login />
   },
   {
-    path: "/dashboard",
-    element: (<DashboardSidebar>
-      <Dashboard />
-      </DashboardSidebar>),
-  },
-  {
     path: '/signup',
     element: <Signup />
   },
   {
+        element: <PrivateRoute />,
+        children: [
+          {
+            path: "/dashboard",
+            element:
+              (
+                <DashboardSidebar>
+                  <Dashboard />
+                </DashboardSidebar>
+              ),
+          },
+        ]
+      },
+  {
     path: '/blogs',
     element: <BlogExplorer />
   },
+  {
+    path: '/test',
+    element: <TestComponent />
+  }
 
 ]);
 
