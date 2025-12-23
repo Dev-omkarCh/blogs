@@ -1,35 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Settings, User, Plus, 
+import {
+  Settings, User, Plus,
   Menu, X, LayoutGrid, LogOut, Sparkles,
   FileText,
-  BarChart3
+  BarChart3,
+  ChevronLeft,
+  Upload
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import useLogout from '@/hooks/useLogout';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState('dashboard');
+  const [activeItem, setActiveItem] = useState(() => {
+    return localStorage.getItem('activeDashboardItem') || 'dashboard';
+  });
+  const navigate = useNavigate();
+  const {logout} = useLogout();
 
+  // Persist active item in localStorage
   useEffect(() => {
-    if(localStorage.getItem('activeDashboardItem')) {
-      if(activeItem !== localStorage.getItem('activeDashboardItem')) {
-        localStorage.setItem('activeDashboardItem', activeItem);
-        return;
-      }
-    } else {
-      localStorage.setItem('activeDashboardItem', activeItem);
-    }
+    localStorage.setItem('activeDashboardItem', activeItem);
 
     return () => {
       localStorage.setItem('lastActiveItem', activeItem);
     };
-  },[activeItem]);
+  }, [activeItem]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'posts', label: 'My Posts', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'explore', label: 'explore', icon: Upload },
   ];
 
   const childrenWithProps = React.Children.map(children, child => {
@@ -41,18 +44,23 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-950 text-slate-200">
-      
+
       {/* --- DESKTOP SIDEBAR --- */}
       <aside className={`
         fixed inset-y-0 left-0 z-110 w-64 bg-slate-950 border-r border-slate-900 
         flex flex-col transform transition-transform duration-300 lg:translate-x-0 lg:static 
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        
+
         {/* 1. BRANDING & COMPACT MENU */}
         <div className="p-6 space-y-8">
           <div className="flex items-center justify-between lg:px-2">
             <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)}>
+                <ChevronLeft
+                  size={25} className="text-slate-500 hover:text-white transition-colors"
+                />
+              </button>
               <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
                 <Sparkles size={16} className="text-white" />
               </div>
@@ -69,11 +77,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <button
                 key={item.id}
                 onClick={() => { setActiveItem(item.id); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                  activeItem === item.id 
-                  ? 'bg-indigo-600/10 text-indigo-400' 
-                  : 'text-slate-600 hover:text-slate-400 hover:bg-white/2'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeItem === item.id
+                    ? 'bg-indigo-600/10 text-indigo-400'
+                    : 'text-slate-600 hover:text-slate-400 hover:bg-white/2'
+                  }`}
               >
                 <item.icon size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
@@ -87,12 +94,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
         {/* 3. BOTTOM UTILITIES (Compact Coffee & Profile) */}
         <div className="p-4 space-y-4">
-          
+
           {/* Coffee Widget (Hidden on very small screens if needed) */}
           <div className="mt-auto mb-6 p-6 rounded-4xl bg-amber-500/5 border border-amber-500/10">
             <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1 italic">Support</p>
             <h4 className="text-xs font-bold text-white mb-3">Buy me a coffee</h4>
-            <button className="w-full py-2.5 bg-amber-500 text-black text-[9px] font-black uppercase tracking-widest rounded-xl">Donate</button>
+            <button 
+              className="w-full py-2.5 bg-amber-500 text-black text-[9px] font-black uppercase 
+              tracking-widest rounded-xl"
+              onClick={() => navigate('/buy-me-coffee')}
+            >
+                Donate</button>
           </div>
 
           {/* SLIM PROFILE CARD */}
@@ -104,7 +116,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <p className="text-[10px] font-bold text-white truncate">John Doe</p>
               <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest leading-none">Pro Plan</p>
             </div>
-            <button className="text-slate-700 hover:text-rose-500 transition-colors">
+            <button 
+              className="text-slate-700 hover:text-rose-500 transition-colors"
+              onClick={()=> logout()}
+            >
               <LogOut size={14} />
             </button>
           </div>

@@ -88,7 +88,7 @@ const Navbar = () => {
             <button
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 
               rounded-full text-sm font-semibold transition-all shadow-md shadow-indigo-500/10"
-              onClick={() => navigate('/blog/create')}
+              onClick={() => navigate('/create-blog')}
             >
               <PenSquare size={18} />
               <span className="hidden sm:inline">Write</span>

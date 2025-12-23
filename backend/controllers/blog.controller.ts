@@ -144,101 +144,60 @@ export const commentOnBlog = async (req: Request, res: Response) => {
     };
 };
 
-
 //  Dashboard Stats (For the Overview Tab)
-export const getDashboardStats = async (req: Request, res: Response) => {
-    const userId = req.userId;
+export const getBlogAnalytics = async (req: Request, res : Response) => {
     try {
-        const stats = await Blog.aggregate([
-            { $match: { userId: userId } },
-            {
-                $group: {
-                    _id: null,
-                    totalViews: { $sum: "$stats.views" },
-                    totalLikes: { $sum: { $size: "$likes" } },
-                    publishedCount: { $sum: { $cond: [{ $eq: ["$status", "published"] }, 1, 0] } },
-                    draftCount: { $sum: { $cond: [{ $eq: ["$status", "draft"] }, 1, 0] } }
-                }
-            }
-        ]);
-        res.status(200).json(stats[0] || { totalViews: 0, totalLikes: 0, publishedCount: 0, draftCount: 0 });
-    } catch (err : any) {
-        res.status(500).json({ error: err.message });
-    }
-};
+        const userId = req.params.userId;
 
-// Get Category Distribution (For the Analytics Tab)
-export const getCategoryAnalytics = async (req: Request, res: Response) => {
-    const userId = req.userId;
-    try {
-        const categories = await Blog.aggregate([
-            { $match: { userId: userId } },
-            { $group: { _id: "$category", count: { $sum: 1 }, views: { $sum: "$stats.views" } } },
-            { $sort: { views: -1 } }
-        ]);
-        res.status(200).json(categories);
-    } catch (err : any) {
-        res.status(500).json({ error: err.message });
-    }
-};
+        // 1. Fetch all blogs for the user
+        const blogs = await Blog.find({ userId : new mongoose.Types.ObjectId(userId) });
 
-// Get Recent Activity (For the Recent Activity List)
-export const getRecentActivity = async (req: Request, res: Response) => {
-    const userId = req.userId;
-    try {
-        const recent = await Blog.find({ userId: userId })
-            .sort({ updatedAt: -1 })
-            .limit(5)
-            .select('title image category stats status updatedAt');
-        res.status(200).json(recent);
-    } catch (err : any) {
-        res.status(500).json({ error: err.message });
-    }
-};
+        // 2. Aggregate Totals
+        let totalViews = 0;
+        let totalLikes = 0;
+        let totalComments = 0;
+        let totalAnonymous = 0;
+        
+        const categoryDistribution: { [key: string]: number } = {};
 
+        blogs.forEach(blog => {
+            totalViews += (blog.stats?.views || 0);
+            totalAnonymous += (blog.stats?.anonymous || 0);
+            totalLikes += (blog.likes?.length || 0);
+            totalComments += (blog.comments?.length || 0);
 
-export const getWeeklyEngagement = async (req: Request, res: Response) => {
-    try {
-
-        const lastWeek = new Date();
-        lastWeek.setDate(lastWeek.getDate() - 7);
-        const userId = req.userId;
-        console.log(userId);
-
-        if(!userId){
-            console.log("userId not exists");
-            return res.status(400).json({ message: "Login required to get weekly engagement" });
-        }
-
-        const engagement = await Blog.aggregate([
-            { 
-                $match: { 
-                    userId: new mongoose.Types.ObjectId(userId),
-                    createdAt: { $gte: lastWeek } 
-                } 
-            },
-            {
-                $group: {
-                    _id: { $dayOfWeek: "$createdAt" }, // 1 (Sun) to 7 (Sat)
-                    totalViews: { $sum: "$stats.views" },
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { "_id": 1 } }
-        ]);
-
-        // Logic: Map the 1-7 result to a standard Mon-Sun array for the frontend
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const formattedData = days.map((day, index) => {
-            const dayData = engagement.find(item => item._id === index + 1);
-            return {
-                day: day,
-                views: dayData ? dayData.totalViews : 0
-            };
+            // Calculate Category Distribution
+            categoryDistribution[blog.category] = (categoryDistribution[blog.category] || 0) + 1;
         });
 
-        res.status(200).json(formattedData);
-    } catch (err : any) {
-        res.status(500).json({ error: err.message });
+        // 3. Find Top Performing Blog
+        const topBlog = [...blogs].sort((a, b) => (b.stats?.views || 0) - (a.stats?.views || 0))[0];
+
+        // 4. Monthly Aggregation (Example: Last 6 months)
+        // In a real app, you'd aggregate this using MongoDB $group by month
+        const activityData = [
+            { name: 'Jul', views: totalViews * 0.1 }, 
+            { name: 'Aug', views: totalViews * 0.15 },
+            { name: 'Sep', views: totalViews * 0.25 },
+            { name: 'Oct', views: totalViews * 0.2 },
+            { name: 'Nov', views: totalViews * 0.3 }
+        ];
+
+        
+
+        res.status(200).json({
+            summary: {
+                totalViews,
+                totalLikes,
+                totalComments,
+                totalAnonymous,
+                blogCount: blogs.length,
+            },
+            categoryDistribution,
+            topBlog,
+            activityData
+        });
+    } catch (error : any) {
+        res.status(500).json({ message: "Analytics Error", error: error.message });
     }
 };

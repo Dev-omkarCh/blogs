@@ -1,7 +1,7 @@
-export default function LoadingSpinner({ size = "w-8 h-8" }) {
+const SimpleSpinner = () => {
   return (
-    <div className="flex justify-center items-center">
-      <div className={`animate-spin rounded-full ${size} border-b-2 border-white`}></div>
-    </div>
+    <div className="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
   );
-}
+};
+
+export default SimpleSpinner;

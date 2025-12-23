@@ -12,6 +12,8 @@ import BlogView from './pages/BlogPage';
 import PrivateRoute from './components/PrivateRoutes';
 import DashboardSidebar from './components/dashboard/SideBar';
 import TestComponent from './components/TestComponent';
+import PublicRoute from './components/PublicRoutes';
+import BuyMeCoffee from './pages/BuyMeACoffee';
 
 const router = createBrowserRouter([
   {
@@ -27,7 +29,7 @@ const router = createBrowserRouter([
         element: <PrivateRoute />,
         children: [
           {
-            path: "/blog/create",
+            path: "/create-blog",
             element: <CreateBlog />
           },
         ]
@@ -43,6 +45,19 @@ const router = createBrowserRouter([
     ],
   },
   {
+    element: <PublicRoute />,
+    children: [
+      {
+        path: '/login',
+        element: <Login />
+      },
+      {
+        path: '/signup',
+        element: <Signup />
+      },
+    ]
+  },
+  {
     path: '/login',
     element: <Login />
   },
@@ -51,19 +66,19 @@ const router = createBrowserRouter([
     element: <Signup />
   },
   {
-        element: <PrivateRoute />,
-        children: [
-          {
-            path: "/dashboard",
-            element:
-              (
-                <DashboardSidebar>
-                  <Dashboard />
-                </DashboardSidebar>
-              ),
-          },
-        ]
+    element: <PrivateRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element:
+          (
+            <DashboardSidebar>
+              <Dashboard />
+            </DashboardSidebar>
+          ),
       },
+    ]
+  },
   {
     path: '/blogs',
     element: <BlogExplorer />
@@ -71,6 +86,10 @@ const router = createBrowserRouter([
   {
     path: '/test',
     element: <TestComponent />
+  },
+  {
+    path: '/buy-me-coffee',
+    element: <BuyMeCoffee />
   }
 
 ]);
