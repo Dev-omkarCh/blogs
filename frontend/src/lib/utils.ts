@@ -29,7 +29,7 @@ export interface InternalAxiosRequestConfig {
 // Request Interceptor: Attach the token to every request
 axiosInstance.interceptors.request.use(
     (config) => {
-        console.log("--- Response Interceptor ---");
+        console.log("--- Request Interceptor ---");
         const accessToken = store.getState().authUser.token;
 
         console.log("Access Token:", accessToken);
@@ -47,6 +47,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const prevRequest = error?.config;
+    console.log("-- Response Interceptors --")
     if (error?.response?.status === 401 && !prevRequest?.sent) {
       prevRequest.sent = true;
       try {

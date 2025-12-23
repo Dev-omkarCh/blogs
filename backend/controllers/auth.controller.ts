@@ -152,5 +152,5 @@ export const generateAccessToken = async (req: Request, res: Response) => {
 
     const accessToken = signAccessToken({ id: user._id, email: user.email });
 
-    res.status(200).json({ message : "Access token generated successfully", accessToken });
+    res.status(200).json({ message : "Access token generated successfully", accessToken, user });
 };
