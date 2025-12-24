@@ -18,12 +18,12 @@ const useLogin = () => {
         if(!success) return setIsLoading(false);
 
         try{
-            const res = await axios.post(`/api/auth/login`,{
+            const response = await axios.post(`/api/auth/login`,{
                 email,
                 password,
             });
-            const user = res.data?.user;
-            const accessToken = res.data?.accessToken;
+            const user = response.data?.user;
+            const accessToken = response.data?.accessToken;
             console.log(user, accessToken);
 
             // localStorage
@@ -34,10 +34,12 @@ const useLogin = () => {
                 accessToken, 
                 isAuthenticated: true
             }));
+            toast.success(response?.data?.message || "Login Successful");
             navigate("/dashboard");
         }
         catch(error : any){
-            toast.error(error?.message);
+            const { message } = error.response.data;
+            toast.error(message || "Login Failed! Please try again.");
         }
         finally{
             setIsLoading(false);

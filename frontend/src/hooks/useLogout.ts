@@ -32,7 +32,8 @@ const useLogout = () => {
             navigate("/login");
         }
         catch(error : any){
-            toast.error(error?.message);
+            const { message } = error.response.data;
+            toast.error(message || "Logout Failed! Please try again.");
         }
         finally{
             setIsLoading(false);
