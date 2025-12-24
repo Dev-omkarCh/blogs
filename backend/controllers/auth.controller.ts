@@ -31,7 +31,13 @@ export const signup = async (req: Request, res: Response) => {
         const { fullName, username, email, password, profileImage, gender } = req.body;
 
         const isValid = validateSignupData({ fullName, username, email, password, profileImage, gender });
-        if (!isValid) return res.status(400).json({ error: "Missing some fields" });
+        if (!isValid) return res.status(400).json({ message: "Missing some fields" });
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(409).json({ message: "Email is already taken" });
+
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername) return res.status(409).json({ message: "Username is already taken" });
 
         const salt = await genSalt(12);
         const hashPassword = await hash(password, salt);
@@ -82,13 +88,13 @@ export const signup = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        if(!email || !password) return res.status(400).json({ error : "Please Provide Email or password"});
+        if(!email || !password) return res.status(400).json({ message : "Please Provide Email or password"});
 
         const user = await User.findOne({ email });
-        if(!user) return res.status(403).json({ error : "No User found" });
+        if(!user) return res.status(403).json({ message : "No User found" });
 
         const isValidPassword = await compare(password, user.password);
-        if(!isValidPassword) return res.status(400).json({ error : "Incorrect username or password "});
+        if(!isValidPassword) return res.status(400).json({ message : "Incorrect username or password "});
 
         const accessToken = signAccessToken({ id: user._id, email: user.email });
         const refreshToken = signRefreshToken({ id: user._id });
@@ -124,7 +130,7 @@ export const login = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
     try {
         const refreshToken = req.cookies?.refreshToken;
-        if(!refreshToken) return res.status(400).json({ error : "No refresh token found in cookies"});
+        if(!refreshToken) return res.status(400).json({ message : "Can't logout, as you are not logged in"});
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

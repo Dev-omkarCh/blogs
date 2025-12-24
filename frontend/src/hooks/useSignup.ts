@@ -43,7 +43,8 @@ const useSignup = () => {
             navigate("/dashboard");
         }
         catch(error : any){
-            toast.error(error?.message);
+            const { message } = error.response.data;
+            toast.error(message || "Signup Failed! Please try again.");
         }
         finally{
             setIsLoading(false);
